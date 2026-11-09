@@ -175,7 +175,8 @@ for i, slug in enumerate(order):
     else:
         out.append(f'<!-- 포스터가 생기면 w{slug}.jpg 로 저장하고 아래 줄의 주석을 풀어 주세요 -->\n<!-- <p><img src="w{slug}.jpg" alt="〈{t}〉 포스터" width="300"></p> -->\n')
     if "소개" in ex:
-        out.append(f"<h3>작품 소개</h3>\n<p>{ex['소개']}</p>\n")
+        paras = "</p>\n<p>".join(x.strip() for x in ex["소개"].split("\n\n"))   # 빈 줄로 문단을 나눈다
+        out.append(f"<h3>작품 소개</h3>\n<p>{paras}</p>\n")
     out.append("<h3>공연 기록</h3>\n<p>\n" + "<br>\n".join(perf_line(r, t) for r in w["rows"]) + "\n</p>\n")
     if "수상" in ex:
         out.append("<h3>수상</h3>\n<p>\n" + "<br>\n".join(ex["수상"]) + "\n</p>\n")

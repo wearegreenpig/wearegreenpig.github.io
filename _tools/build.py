@@ -1,6 +1,6 @@
 import sys, re, os
 sys.path.insert(0, os.path.dirname(__file__))
-from works_data import PERFORMANCES, EXTRA, YS_REVIEWS
+from works_data import PERFORMANCES, EXTRA, YS_REVIEWS, OTHER
 
 SITE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 사이트 폴더 = _tools 의 한 단계 위
 
@@ -198,9 +198,24 @@ for i, slug in enumerate(order):
     out.append("<hr>\n<p>" + " | ".join(nav) + '<br>\n<a href="archive.html">아카이브로 돌아가기</a> | <a class="random" href="archive.html">아무 작품이나</a></p>\n')
     open(f"{SITE}/{page(slug)}", "w").write("\n".join(out))
 
-# 아카이브 다시 만들기: 연도별 목록 + 기존 기타·수상 블록 유지
+# 아카이브 다시 만들기: 연도별 목록(날짜 〈제목〉 / 공연장) + 기타 공연(works_data의 OTHER) + 기존 수상 블록 유지
 old = open(f"{SITE}/archive.html").read()
-tail = old[old.index('<h3 id="other">'):]
+tail = old[old.index('<h3 id="awards">'):]
+OTHER_RE = re.compile(r"^(\S+) (.*?) / (.*?)(?: - (.*))?$")
+other_rows = []   # (날짜, 제목 부분, 작·연출, 공연장, 비고)
+for l in OTHER.strip().splitlines():
+    m = OTHER_RE.match(l.strip())
+    d, mid, v, note = m.group(1), m.group(2), m.group(3), m.group(4) or ""
+    t = re.match(r"^(〈.+?〉)\s*(.*)$", mid)
+    title, rest = (t.group(1), t.group(2)) if t else (mid, "")
+    if not t and ", " in mid:                 # 제목 없이 '행사명, 누구 연출'
+        title, rest = mid.split(", ", 1)
+    other_rows.append((d, title, rest, v, note))
+def other_short(r):
+    d, title, rest, v, note = r
+    if rest and not re.search(r"연출|작$| 작,|공동창작", rest):   # '쇼케이스', '온라인 낭독회' 같은 설명은 남긴다
+        title += " " + rest
+    return f"{d} {title} / {v}" + (" - 낭독" if note == "낭독" else "")
 years = sorted({r["date"][:4] for r in rows}, reverse=True)
 a = [HEAD.format(t="아카이브")]
 a.append('<p><a href="index.html">그린피그</a> &gt; 아카이브</p>\n')
@@ -211,15 +226,14 @@ abroad = {k for r in rows for k in ABROAD if k in r["venue"]}
 STATS = (f'<p>{years[-1]}–{years[0]}, {int(years[0]) - int(years[-1])}년. 작품 {len(order)}편, 공연 기록 {len(rows)}건, '
          f'극장 {len(all_venues)}곳(해외 {len(abroad)}개 도시), 크레딧에 오른 이름 {{N_PEOPLE}}명.</p>\n')
 a.append(STATS)
-a.append("<!-- 새 공연은 해당 연도 맨 아래에 한 줄 추가. 형식: 날짜 <a href=\"w번호.html\">〈제목〉</a> 작·연출 / 공연장 - 비고<br> -->\n")
+a.append("<!-- 이 페이지는 build.py가 만든다. 공연은 _tools/works_data.py에 추가 -->\n")
 for y in years:
     lines = []
     for r in rows:
         if r["date"][:4] != y: continue
-        s = f'{r["date"]} <a href="{page(r["slug"])}">〈{r["title"]}〉</a> {r["credit"]} / {r["venue"]}'
-        if r["note"]: s += f' - {r["note"]}'
-        lines.append(s)
+        lines.append(f'{r["date"]} <a href="{page(r["slug"])}">〈{r["title"]}〉</a> / {r["venue"]}')   # 작·연출과 비고는 작품 페이지·연보에
     a.append(f'<h3 id="y{y}">{y}</h3>\n<p>\n' + "<br>\n".join(lines) + "\n</p>\n")
+a.append('<h3 id="other">기타 공연·낭독</h3>\n<p>\n' + "<br>\n".join(other_short(r) for r in other_rows) + "\n</p>\n")
 a.append(tail)
 open(f"{SITE}/archive.html", "w").write("\n".join(a))
 print(len(order), "works,", len(rows), "performances")
@@ -291,7 +305,6 @@ def tail_lines(anchor):
     blk = arch[arch.index(f'<h3 id="{anchor}">'):]
     blk = blk[blk.index("<p>") + 3: blk.index("</p>")]
     return [l.replace("<br>", "").strip() for l in blk.strip().splitlines() if l.strip()]
-OTHER_RE = re.compile(r"^(\S+) 〈(.+?)〉\s*(.*?) / (.*?)(?: - (.*))?$")
 def cell(x):
     return f"<td>{x}</td>"
 c = [HEAD.format(t="공연 연보")]
@@ -309,10 +322,8 @@ for y in years:
 c.append("</table></div>\n")
 c.append("<h3>기타 공연·낭독</h3>")
 c.append('<div class="wide"><table class="chrono">\n<tr><th>기간</th><th>작품</th><th>작·연출</th><th>공연장</th><th>비고</th></tr>')
-for l in tail_lines("other"):
-    m = OTHER_RE.match(l)
-    if m:
-        c.append("<tr>" + "".join(cell(x or "") for x in (m.group(1), f"〈{m.group(2)}〉", m.group(3), m.group(4), m.group(5))) + "</tr>")
+for d, title, rest, v, note in other_rows:
+    c.append("<tr>" + "".join(cell(x) for x in (d, title, rest, v, note)) + "</tr>")
 c.append("</table></div>\n")
 c.append("<h3>수상</h3>\n<p>\n" + "<br>\n".join(tail_lines("awards")) + "\n</p>\n")
 c.append('<hr class="noprint">\n<p>그린피그 · greenpig.kr@gmail.com · wearegreenpig.github.io</p>\n')

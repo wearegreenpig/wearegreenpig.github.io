@@ -174,6 +174,10 @@ for i, slug in enumerate(order):
             out.append('<p class="posters">\n' + "\n".join(cells) + "\n</p>\n")
     else:
         out.append(f'<!-- 포스터가 생기면 w{slug}.jpg 로 저장하고 아래 줄의 주석을 풀어 주세요 -->\n<!-- <p><img src="w{slug}.jpg" alt="〈{t}〉 포스터" width="300"></p> -->\n')
+    if os.path.exists(f"{SITE}/w{slug}s.jpg"):   # 대표 공연 사진 한 장 (w##s.jpg), 설명은 works_data의 사진=
+        cap = ex.get("사진", "")
+        out.append(f'<p class="scene"><img src="w{slug}s.jpg" alt="〈{t}〉 공연 사진" width="600" loading="lazy">'
+                   + (f'<br><small>{cap}</small>' if cap else "") + "</p>\n")
     if "소개" in ex:
         paras = "</p>\n<p>".join(x.strip() for x in ex["소개"].split("\n\n"))   # 빈 줄로 문단을 나눈다
         out.append(f"<h3>작품 소개</h3>\n<p>{paras}</p>\n")

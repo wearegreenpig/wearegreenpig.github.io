@@ -227,9 +227,14 @@ STATS = (f'<p>{years[-1]}–{years[0]}, {int(years[0]) - int(years[-1])}년. 작
          f'극장 {len(all_venues)}곳(해외 {len(abroad)}개 도시), 크레딧에 오른 이름 {{N_PEOPLE}}명.</p>\n')
 a.append(STATS)
 a.append("<!-- 이 페이지는 build.py가 만든다. 공연은 _tools/works_data.py에 추가 -->\n")
+def start_key(d):   # '2026.5.22–6.7' → (2026, 5, 22). 달만 있으면 일은 0
+    p = re.match(r"^(\d{4})(?:\.(\d{1,2}))?(?:\.(\d{1,2}))?", d).groups()
+    return tuple(int(x or 0) for x in p)
+newest_first = sorted(rows, key=lambda r: start_key(r["date"]), reverse=True)   # 아카이브·연보는 최근 공연이 위로
+other_rows.sort(key=lambda r: start_key(r[0]), reverse=True)
 for y in years:
     lines = []
-    for r in rows:
+    for r in newest_first:
         if r["date"][:4] != y: continue
         lines.append(f'{r["date"]} <a href="{page(r["slug"])}">〈{r["title"]}〉</a> / {r["venue"]}')   # 작·연출과 비고는 작품 페이지·연보에
     a.append(f'<h3 id="y{y}">{y}</h3>\n<p>\n' + "<br>\n".join(lines) + "\n</p>\n")
@@ -314,7 +319,7 @@ c.append('<p class="noprint">인쇄하거나 PDF로 저장하면 지원서 첨�
 c.append('<div class="wide"><table class="chrono">\n<tr><th>연도</th><th>기간</th><th>작품</th><th>작·연출</th><th>공연장</th><th>비고</th></tr>')
 for y in years:
     first = True
-    for r in rows:
+    for r in newest_first:
         if r["date"][:4] != y: continue
         d = r["date"][5:] if r["date"].startswith(y + ".") else r["date"]
         c.append("<tr>" + cell(y if first else "") + cell(d) + cell(f"〈{r['title']}〉") + cell(r["credit"]) + cell(r["venue"]) + cell(r["note"]) + "</tr>")

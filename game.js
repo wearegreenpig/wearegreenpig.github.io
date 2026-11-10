@@ -130,8 +130,8 @@
       return;
     }
     if (state !== "run") return;
-    // 빠르기: 처음 40편까지 꾸준히 빨라지고, 그 뒤로는 끝까지 조금씩 더 (2026.11.10 조금 쉽게 조정)
-    speed = cleared <= 40 ? 0.29 + 0.0072 * cleared : 0.578 + 0.06 * (cleared - 40) / Math.max(1, N - 40);   // 0.29 → 40편째 0.578 → 끝 0.638
+    // 빠르기: 처음 40편까지 꾸준히 빨라지고, 그 뒤로는 끝까지 조금씩 더 (2026.11.10 베타테스트 뒤 어렵게 조정)
+    speed = cleared <= 40 ? 0.30 + 0.0085 * cleared : 0.64 + 0.12 * (cleared - 40) / Math.max(1, N - 40);   // 0.30 → 40편째 0.64 → 끝 0.76
     dist += speed * dt;
     frameT += dt;
     if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }
@@ -145,11 +145,11 @@
       if (nextGap <= 0) {
         var k = GROUND_KINDS[Math.floor(rng() * GROUND_KINDS.length)];
         if (spawned < 3 && k === "객석") k = "의자";  // 처음 두세 개만 넓은 장애물을 빼 준다
-        var lamp = spawned >= 2 && rng() < 0.22;
+        var lamp = spawned >= 2 && rng() < 0.28;
         if (lamp) k = "파 조명";
-        obs.push({ x: W + 10 + (lamp ? 90 : 0), s: SHAPES[k], i: spawned });
+        obs.push({ x: W + 10 + (lamp ? 70 : 0), s: SHAPES[k], i: spawned });
         spawned++;
-        nextGap = 230 + rng() * 260 + speed * 300 + (lamp ? 140 : 0);
+        nextGap = 230 + rng() * 260 + speed * 300 + (lamp ? 110 : 0);
       }
     } else if (cleared >= N && y === 0) {          // 마지막 공연까지 넘었다
       state = "end"; overAt = Date.now(); endT = 0; saveBest(N); setStatus();

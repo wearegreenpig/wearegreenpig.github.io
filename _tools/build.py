@@ -309,7 +309,7 @@ arch = open(f"{SITE}/archive.html").read()
 def tail_lines(anchor):
     blk = arch[arch.index(f'<h3 id="{anchor}">'):]
     blk = blk[blk.index("<p>") + 3: blk.index("</p>")]
-    return [l.replace("<br>", "").strip() for l in blk.strip().splitlines() if l.strip()]
+    return [l.replace("<br>", "").strip() for l in blk.strip().splitlines() if l.strip() and not l.strip().startswith("<!--")]
 def cell(x):
     return f"<td>{x}</td>"
 c = [HEAD.format(t="공연 연보")]

@@ -131,7 +131,7 @@
     }
     if (state !== "run") return;
     // 빠르기: 처음 40편까지는 예전(끝없는 버전)과 같은 속도로 빨라지고, 그 뒤로는 끝까지 조금씩 더
-    speed = cleared <= 40 ? 0.30 + 0.008 * cleared : 0.62 + 0.08 * (cleared - 40) / Math.max(1, N - 40);
+    speed = cleared <= 40 ? 0.295 + 0.0076 * cleared : 0.599 + 0.07 * (cleared - 40) / Math.max(1, N - 40);   // 0.295 → 40편째 0.599 → 끝 0.669 (처음 버전보다 4%쯤 느리게)
     dist += speed * dt;
     frameT += dt;
     if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }

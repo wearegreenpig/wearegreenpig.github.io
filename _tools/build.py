@@ -421,5 +421,13 @@ ar = open(f"{SITE}/archive.html").read().replace("{N_PEOPLE}", str(len(people)))
 open(f"{SITE}/archive.html", "w").write(ar)
 
 # 공통 머리말과 최종 수정 날짜
+# ---- 돼지 달리기(game.js)의 코스: 공연 기록을 오래된 순으로 ----
+pig = [[r["date"][:4], r["title"], r["venue"].split(";")[0].strip(), page(r["slug"])]
+       for r in sorted(rows, key=lambda r: start_key(r["date"]))]
+open(f"{SITE}/pig-data.js", "w").write(
+    "// 돼지 달리기 코스: 공연 기록 [연도, 제목, 공연장, 작품 페이지] (build.py가 자동 생성)\nwindow.PIG_DATA = "
+    + _json.dumps(pig, ensure_ascii=False) + ";\n")
+print(len(pig), "pig course")
+
 import finish
 finish.main()

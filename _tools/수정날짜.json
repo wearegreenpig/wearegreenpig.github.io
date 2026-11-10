@@ -9,11 +9,11 @@
 },
 "archive.html": {
 "date": "2026.11.10",
-"hash": "8562f424b0b2902ee4784f46b41b299da6239b6b"
+"hash": "4c792e7698a706dffd5510df38f8873607163315"
 },
 "chronology.html": {
 "date": "2026.11.10",
-"hash": "7efa7cb2f9ab11cb40c0bc1c23cbd2b663f91c39"
+"hash": "02d76f88b0c0b3b496e682d53288a1e8e2e2ad26"
 },
 "colophon.html": {
 "date": "2026.11.9",
@@ -21,7 +21,7 @@
 },
 "index.html": {
 "date": "2026.11.10",
-"hash": "7755b4fddf4efda2b4abbc5527a8f5811c2c4604"
+"hash": "687e54554a01d869e35368f05e6bc883a5e5ba92"
 },
 "people.html": {
 "date": "2026.11.10",
@@ -261,7 +261,7 @@
 },
 "w52.html": {
 "date": "2026.11.10",
-"hash": "b02d3f1b1afedc2c4b9f58edc171382847887f68"
+"hash": "371dd8875c6727c18bbed6b98cbf3d16c76ba7b7"
 },
 "w53.html": {
 "date": "2026.11.9",
@@ -340,8 +340,8 @@
 "hash": "2e28218af7e663fc683c18a75f648ea9dbbc3985"
 },
 "who.html": {
-"date": "2026.11.9",
-"hash": "f33d8cc932db4512950f61343269e0b1a5719fd6"
+"date": "2026.11.10",
+"hash": "ade8c90998dbf2beeffa8d5718af8e2c5dc223c9"
 },
 "writers.html": {
 "date": "2026.11.9",

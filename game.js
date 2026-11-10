@@ -130,8 +130,8 @@
       return;
     }
     if (state !== "run") return;
-    // 빠르기: 처음 40편까지는 예전(끝없는 버전)과 같은 속도로 빨라지고, 그 뒤로는 끝까지 조금씩 더
-    speed = cleared <= 40 ? 0.30 + 0.008 * cleared : 0.62 + 0.08 * (cleared - 40) / Math.max(1, N - 40);
+    // 빠르기: 처음 40편까지 꾸준히 빨라지고, 그 뒤로는 끝까지 조금씩 더 (2026.11.10 조금 쉽게 조정)
+    speed = cleared <= 40 ? 0.29 + 0.0072 * cleared : 0.578 + 0.06 * (cleared - 40) / Math.max(1, N - 40);   // 0.29 → 40편째 0.578 → 끝 0.638
     dist += speed * dt;
     frameT += dt;
     if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }

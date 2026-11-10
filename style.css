@@ -30,7 +30,7 @@ table.chrono th, table.chrono td { border-bottom: 1px solid var(--rule); padding
 .posters small{color:var(--rule)}
 a.hid,a.hid:visited{color:inherit;text-decoration:none}
 /* 첫 페이지 로고는 밤낮 전환 버튼. 버튼 모양은 지우고 그림만 보이게 한다 */
-button.night{-webkit-appearance:none;appearance:none;background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:0;line-height:0;cursor:pointer;color:inherit}
+button.night{-webkit-appearance:none;appearance:none;background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:0;line-height:0;cursor:pointer;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 button.night:focus:not(:focus-visible){outline:none}
 /* 작품 페이지의 대표 공연 사진: 화면 폭에 맞춰 줄어든다 */
 .scene img{max-width:100%;height:auto}

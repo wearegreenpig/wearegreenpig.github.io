@@ -31,9 +31,17 @@
       [[0.5, 0.18], [0.5, 0.86]],
       [[0.15, 1], [0.85, 1]], [[0.5, 0.86], [0.2, 1]], [[0.5, 0.86], [0.8, 1]],
       [[0.4, 0], [0.6, 0], [0.62, 0.18], [0.38, 0.18], [0.4, 0]],   // 마이크 머리
-      [[0.5, 0.18], [0.5, 0.22]]] }
+      [[0.5, 0.18], [0.5, 0.22]]] },
+    "파 조명": { w: 30, h: 40, top: true, lines: [                // 배튼에 매달린 파 조명. 뛰면 부딪힌다
+      [[-0.4, 0], [1.4, 0]],                                      // 배튼(파이프)
+      [[0.42, 0], [0.42, 0.12]], [[0.58, 0], [0.58, 0.12]],       // 클램프
+      [[0.1, 0.62], [0.1, 0.18], [0.9, 0.18], [0.9, 0.62]],         // 요크(ㄷ자 걸이)
+      [[0.22, 0.3], [0.78, 0.3], [0.86, 1], [0.14, 1], [0.22, 0.3]], // 조명 통
+      [[0.14, 1], [0.86, 1]],
+      [[0.75, 0.05], [1.15, 0.2], [1.2, 0.5]]] }                     // 늘어진 케이블
   };
-  var KINDS = Object.keys(STROKES);
+  var KINDS = Object.keys(STROKES).filter(function (k) { return !STROKES[k].top; });
+  var LAMP_BOTTOM = GROUND - PIG_H - 9;             // 서 있는 돼지 머리 바로 위
 
   function wobble(lines, w, h, seed) {             // 선을 잘게 나눠 손떨림을 준다 (한 번만 계산)
     var r = seed;
@@ -53,11 +61,11 @@
     });
   }
   var SHAPES = {};
-  KINDS.forEach(function (k, i) { var s = STROKES[k]; SHAPES[k] = { w: s.w, h: s.h, lines: wobble(s.lines, s.w, s.h, 17 + i * 31) }; });
+  Object.keys(STROKES).forEach(function (k, i) { var s = STROKES[k]; SHAPES[k] = { w: s.w, h: s.h, top: !!s.top, lines: wobble(s.lines, s.w, s.h, 17 + i * 31) }; });
 
   var box, canvas, ctx, note, raf = 0, last = 0, colorAt = 0, fg = "#000", rule = "#888";
   var mask = null, pig = null, pigW = PIG_H, tinted = "";
-  var state, y, vy, speed, dist, obs, nextGap, best, frameT, overAt, groundSeed;
+  var state, y, vy, speed, dist, obs, nextGap, top3, frameT, overAt, groundSeed, form, lastScore;
 
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
@@ -95,7 +103,7 @@
   }
 
   function jump() {
-    if (state === "over") { if (Date.now() - overAt < 450) return; reset(); state = "run"; return; }
+    if (state === "over") { if (Date.now() - overAt < 450) return; form.hidden = true; reset(); state = "run"; return; }
     if (state === "ready") state = "run";
     if (y === 0) vy = JUMP;
   }
@@ -112,17 +120,19 @@
     if (nextGap <= 0) {
       var k = KINDS[Math.floor(Math.random() * KINDS.length)];
       if (dist < 1500 && k === "객석") k = "의자";  // 처음에는 넓은 장애물을 빼 준다
-      obs.push({ x: W + 10, s: SHAPES[k] });
-      nextGap = 230 + Math.random() * 260 + speed * 300;
+      if (dist > 900 && Math.random() < 0.22) k = "파 조명";
+      obs.push({ x: W + 10 + (k === "파 조명" ? 90 : 0), s: SHAPES[k] });   // 조명 앞은 착지할 틈을 더 준다
+      nextGap = 230 + Math.random() * 260 + speed * 300 + (k === "파 조명" ? 140 : 0);
     }
     // 부딪힘: 돼지와 장애물 상자를 조금 안쪽으로 줄여서 잰다 (스치는 건 봐준다)
     var px1 = PIG_X + pigW * 0.22, px2 = PIG_X + pigW * 0.8, py2 = GROUND - y - 4, py1 = py2 - PIG_H * 0.6;
     for (var i = 0; i < obs.length; i++) {
       var o = obs[i], ox1 = o.x + 4, ox2 = o.x + o.s.w - 4, oy1 = GROUND - o.s.h + 5;
-      if (px2 > ox1 && px1 < ox2 && py2 > oy1) {
+      var hit = o.s.top ? (px2 > ox1 && px1 < ox2 && py1 < LAMP_BOTTOM - 4) : (px2 > ox1 && px1 < ox2 && py2 > oy1);
+      if (hit) {
         state = "over"; overAt = Date.now();
-        var sc = Math.floor(dist / 10);
-        if (sc > best) { best = sc; try { localStorage.setItem("pigBest", String(best)); } catch (e) {} }
+        lastScore = Math.floor(dist / 10);
+        if (qualifies(lastScore)) askName(lastScore);
         break;
       }
     }
@@ -153,7 +163,21 @@
       ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 3 + (p % 3) * 2, py); ctx.stroke();
     }
     ctx.lineWidth = 1.6;
-    obs.forEach(function (o) { o.s.lines.forEach(function (l) { line(l, o.x, GROUND - o.s.h); }); });
+    ctx.beginPath();                                // 무대 위 배튼: 파 조명이 여기에 매달려 지나간다
+    for (var bx = 0; bx <= W; bx += 8) {
+      var by = LAMP_BOTTOM - 40 + Math.sin((bx + dist) * 0.021) * 0.7;
+      if (bx === 0) ctx.moveTo(bx, by); else ctx.lineTo(bx, by);
+    }
+    ctx.stroke();
+    obs.forEach(function (o) {
+      if (o.s.top) {                                // 조명 빛: 바닥까지 흐린 점선
+        ctx.save(); ctx.strokeStyle = rule; ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
+        ctx.beginPath(); ctx.moveTo(o.x + 5, LAMP_BOTTOM + 2); ctx.lineTo(o.x - 10, GROUND - 2);
+        ctx.moveTo(o.x + o.s.w - 5, LAMP_BOTTOM + 2); ctx.lineTo(o.x + o.s.w + 10, GROUND - 2); ctx.stroke(); ctx.restore();
+      }
+      var oy = o.s.top ? LAMP_BOTTOM - o.s.h : GROUND - o.s.h;
+      o.s.lines.forEach(function (l) { line(l, o.x, oy); });
+    });
     // 돼지: 달릴 때 통통 튀고 살짝 기운다
     if (pig && tinted) {
       var run = state === "run" && y === 0, f = run ? Math.floor(frameT / 110) % 2 : 0;
@@ -168,10 +192,17 @@
     // 글자
     ctx.font = "15px serif"; ctx.textBaseline = "top"; ctx.textAlign = "right";
     var sc = Math.floor(dist / 10);
-    ctx.fillText((best ? "최고 " + best + "   " : "") + sc, W - 6, 6);
+    ctx.fillText((top3.length ? "최고 " + top3[0].s + "   " : "") + sc, W - 6, 6);
     ctx.textAlign = "center";
     if (state === "ready") ctx.fillText("스페이스나 화면을 누르면 달립니다", W / 2, 46);
-    if (state === "over") { ctx.fillText("부딪혔다!", W / 2, 38); ctx.fillStyle = rule; ctx.fillText("다시 하려면 누르세요", W / 2, 60); }
+    if (state === "over") {
+      ctx.fillText("부딪혔다!", W / 2, 30); ctx.fillStyle = rule; ctx.fillText("다시 하려면 누르세요", W / 2, 50);
+      if (top3.length) {                            // 이 기기에서 세운 기록 3위까지
+        ctx.textAlign = "left"; ctx.font = "13px serif";
+        ctx.fillText("이 기기 기록", 8, 8); ctx.fillStyle = fg;
+        top3.forEach(function (r, i) { ctx.fillText((i + 1) + ". " + r.n + "  " + r.s, 8, 26 + i * 17); });
+      }
+    }
   }
 
   function loop(t) {
@@ -182,12 +213,35 @@
   }
 
   function onKey(e) {
-    if (e.key === "Escape") { close(); return; }
+    if (e.key === "Escape") { if (!form.hidden && document.activeElement === form.querySelector("input")) { form.hidden = true; document.activeElement.blur(); } else close(); return; }
     if (e.key === " " || e.key === "ArrowUp" || e.key === "w") {
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
       e.preventDefault(); if (!e.repeat) jump();
     }
+  }
+  function loadTop() {
+    try {
+      var t = JSON.parse(localStorage.getItem("pigTop") || "[]");
+      if (!t.length) { var b = parseInt(localStorage.getItem("pigBest") || "0", 10); if (b) t = [{ n: "?", s: b }]; }
+      return t.slice(0, 3);
+    } catch (e) { return []; }
+  }
+  function saveTop() { try { localStorage.setItem("pigTop", JSON.stringify(top3)); } catch (e) {} }
+  function qualifies(sc) { return sc >= 30 && (top3.length < 3 || sc > top3[top3.length - 1].s); }
+  function askName(sc) {                            // 3위 안에 들면 캔버스 아래에 이름 칸을 띄운다
+    var place = top3.filter(function (r) { return r.s >= sc; }).length + 1;
+    form.hidden = false;
+    form.querySelector("span").textContent = place + "위! " + sc + "점. 이름을 남기세요 ";
+    var inp = form.querySelector("input"); inp.value = "";
+    setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
+  }
+  function submitName(e) {
+    if (e) e.preventDefault();
+    var n = form.querySelector("input").value.replace(/\s+/g, " ").trim().slice(0, 10) || "익명";
+    top3.push({ n: n, s: lastScore }); top3.sort(function (a, b) { return b.s - a.s; }); top3 = top3.slice(0, 3);
+    saveTop(); form.hidden = true;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
   function onKeyUp(e) {                             // 로고 버튼에 초점이 남아 있으면 스페이스가 밤낮을 바꾸므로 막는다
     if (e.key === " " && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "")) e.preventDefault();
@@ -203,15 +257,17 @@
 
   function open() {
     if (box) { jump(); return; }
-    try { best = parseInt(localStorage.getItem("pigBest") || "0", 10) || 0; } catch (e) { best = 0; }
+    top3 = loadTop();
     box = document.createElement("div");
     box.id = "pig-game";
     box.innerHTML = '<canvas role="img" aria-label="돼지 달리기 게임. 스페이스나 화면을 눌러 점프" style="display:block;width:100%;max-width:' + W + 'px;aspect-ratio:' + W + '/' + H + ';touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"></canvas>' +
+      '<form hidden style="margin:6px 0 0"><span></span><input maxlength="10" size="10" aria-label="이름" autocomplete="off" enterkeyhint="done"> <button type="submit">남기기</button></form>' +
       '<p class="note" style="margin:4px 0 0">돼지 달리기 · 스페이스·↑·화면 누르기로 점프 · <a href="#" class="hid" style="text-decoration:underline">닫기</a></p>';
     var anchor = document.querySelector(".night");
     var at = anchor && anchor.closest("p");
     if (at && at.parentNode) at.parentNode.insertBefore(box, at.nextSibling); else document.body.insertBefore(box, document.body.firstChild);
     canvas = box.querySelector("canvas"); ctx = canvas.getContext("2d");
+    form = box.querySelector("form"); form.addEventListener("submit", submitName);
     canvas.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
     box.querySelector("a").addEventListener("click", function (e) { e.preventDefault(); close(); });
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();

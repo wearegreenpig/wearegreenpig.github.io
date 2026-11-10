@@ -1,7 +1,7 @@
 // 숨은 놀이 「돼지 달리기」: 첫 페이지 로고를 빠르게 다섯 번 누르면 열린다 (theme.js가 불러온다).
 // 로고 돼지가 무대로 뛰어내려, 그린피그 공연 기록(pig-data.js, build.py가 만든다)을
 // 2006년부터 순서대로 하나씩 뛰어넘는다. 장애물 하나가 공연 하나.
-// 끝까지 가면 돼지는 인사 없이 무대 밖으로 나가고 암전. 그린피그는 커튼콜을 하지 않는다.
+// 끝까지 가면 막이 닫히는데, 돼지는 인사하지 않고 걸어 나가 버린다. 그린피그는 커튼콜을 하지 않는다.
 // 부딪히면 처음부터. 그림 파일은 로고 하나뿐이고 장애물은 아래 STROKES로 그린다.
 (function () {
   if (window.pigGame) return;
@@ -116,17 +116,17 @@
 
   function act() {                                 // 스페이스·화면 누르기
     if (state === "intro" || state === "outro") return;
-    if (state === "end" && !(goneAt >= 0 && endT > goneAt + 1500)) return;   // 암전 글자가 뜨기 전에는 다시 시작하지 않는다
+    if (state === "end" && !(goneAt >= 0 && endT > goneAt + 900)) return;   // 마지막 글자가 뜨기 전에는 다시 시작하지 않는다
     if (state === "over" || state === "end") { if (Date.now() - overAt < 500) return; reset(); state = "run"; setStatus(); return; }
     if (state === "ready") { state = "run"; setStatus(); }
     if (y === 0) vy = JUMP;
   }
 
   function step(dt) {
-    if (state === "end") {                         // 마지막 공연 뒤: 돼지는 멈추지 않고 무대 밖으로. 잠깐 빈 무대, 그리고 암전
-      endT += dt; frameT += dt;
+    if (state === "end") {                         // 마지막 공연 뒤: 막이 닫히는 동안 돼지는 인사 없이 걸어 나간다
+      endT += dt; frameT += dt * 0.6;              // 달리기보다 느린 걸음
       if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }
-      if (goneAt < 0) { pigX += 0.42 * dt; if (pigX > W + 10) goneAt = endT; }
+      if (goneAt < 0) { pigX += 0.2 * dt; if (pigX > W + 10) goneAt = endT; }
       return;
     }
     if (state !== "run") return;
@@ -232,6 +232,23 @@
         o.s.lines.forEach(function (l) { line(l, o.x, GROUND - o.s.h); });
       }
     });
+    // 막: 양쪽에서 닫혀 온다
+    if (state === "end") {
+      var c = Math.min(1, endT / 1600), cw = (W / 2) * (1 - Math.pow(1 - c, 3));
+      [[0, cw], [W - cw, W]].forEach(function (r) {
+        ctx.fillStyle = bg; ctx.fillRect(r[0], BATTEN + 1, r[1] - r[0], GROUND - BATTEN - 1);
+        ctx.strokeStyle = fg; ctx.lineWidth = 1.1;
+        for (var fx = r[0] + 6; fx < r[1]; fx += 17) {   // 막의 주름
+          ctx.beginPath();
+          for (var fy = BATTEN + 2; fy <= GROUND; fy += 8) {
+            var wx = fx + Math.sin(fy * 0.09 + fx) * 1.6;
+            if (fy === BATTEN + 2) ctx.moveTo(wx, fy); else ctx.lineTo(wx, fy);
+          }
+          ctx.stroke();
+        }
+      });
+      ctx.strokeStyle = fg; ctx.fillStyle = fg; ctx.lineWidth = 1.6;
+    }
     // 돼지
     if (pig && tinted && state !== "intro" && state !== "outro") {
       var run = (state === "run" || state === "end") && y === 0, f = run ? Math.floor(frameT / 110) % 2 : 0;
@@ -240,6 +257,7 @@
       ctx.save();
       ctx.translate(pigX + pigW / 2, GROUND - y - bob - PIG_H / 2 + 2);
       ctx.rotate(tilt);
+      if (state === "end") { ctx.fillStyle = bg; ctx.fillRect(-pigW / 2 + 3, -PIG_H / 2 + 2, pigW - 6, PIG_H - 6); }   // 막 앞을 지나가는 돼지
       ctx.drawImage(pig, -pigW / 2, -PIG_H / 2, pigW, PIG_H);
       ctx.restore();
     }
@@ -265,13 +283,11 @@
     ctx.textAlign = "center"; ctx.font = "15px serif"; ctx.fillStyle = fg;
     if (state === "ready") { ctx.fillText("2006년부터 지금까지, 공연 " + N + "편을 넘어 보세요", W / 2, 84); ctx.fillStyle = rule; ctx.fillText(touch ? "화면을 누르면 출발" : "스페이스나 화면을 누르면 출발", W / 2, 106); }
     if (state === "over") { ctx.fillText("부딪혔다!", W / 2, 84); ctx.fillStyle = rule; ctx.fillText("처음부터 다시 하려면 누르세요", W / 2, 106); }
-    if (state === "end" && goneAt >= 0 && endT > goneAt + 700) {   // 암전: 밤낮 상관없이 깜깜하게, 툭 꺼진다
-      var t = endT - goneAt - 700;
-      ctx.fillStyle = "#0b0b0b"; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#e8e8e8";
-      if (t > 700) { ctx.font = "bold 22px serif"; ctx.fillText("끝.", W / 2, 60); }
-      if (t > 1300) { ctx.font = "15px serif"; ctx.fillText("2006–" + perf(N - 1)[0] + " · 공연 " + N + "편", W / 2, 92); ctx.fillText("그린피그는 커튼콜을 하지 않습니다.", W / 2, 116); }
-      if (t > 2300) { ctx.fillStyle = "#8a8a8a"; ctx.font = "14px serif"; ctx.fillText("다음 공연을 준비 중입니다.", W / 2, 152); }
+    if (state === "end" && goneAt >= 0 && endT > goneAt + 400) {   // 돼지가 나간 뒤, 닫힌 막 위에 글자판
+      var msg = "2006–" + perf(N - 1)[0] + " · 공연 " + N + "편 완주";
+      ctx.font = "14px serif"; var mw = Math.max(ctx.measureText(msg).width, 60) + 28;
+      ctx.fillStyle = bg; ctx.fillRect(W / 2 - mw / 2, 80, mw, 52); ctx.strokeStyle = fg; ctx.lineWidth = 1.2; ctx.strokeRect(W / 2 - mw / 2, 80, mw, 52);
+      ctx.fillStyle = fg; ctx.font = "bold 18px serif"; ctx.fillText("커튼콜 없음", W / 2, 102); ctx.font = "14px serif"; ctx.fillText(msg, W / 2, 122);
     }
   }
 

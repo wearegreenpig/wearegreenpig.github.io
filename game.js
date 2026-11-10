@@ -127,7 +127,8 @@
       return;
     }
     if (state !== "run") return;
-    speed = 0.30 + 0.30 * cleared / Math.max(1, N);
+    // 빠르기: 처음 40편까지는 예전(끝없는 버전)과 같은 속도로 빨라지고, 그 뒤로는 끝까지 조금씩 더
+    speed = cleared <= 40 ? 0.30 + 0.008 * cleared : 0.62 + 0.08 * (cleared - 40) / Math.max(1, N - 40);
     dist += speed * dt;
     frameT += dt;
     if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }
@@ -140,8 +141,8 @@
       nextGap -= speed * dt;
       if (nextGap <= 0) {
         var k = GROUND_KINDS[Math.floor(rng() * GROUND_KINDS.length)];
-        if (spawned < 12 && k === "객석") k = "의자"; // 처음에는 넓은 장애물을 빼 준다
-        var lamp = spawned >= 8 && rng() < 0.22;
+        if (spawned < 3 && k === "객석") k = "의자";  // 처음 두세 개만 넓은 장애물을 빼 준다
+        var lamp = spawned >= 2 && rng() < 0.22;
         if (lamp) k = "파 조명";
         obs.push({ x: W + 10 + (lamp ? 90 : 0), s: SHAPES[k], i: spawned });
         spawned++;

@@ -65,7 +65,7 @@
 
   var box, canvas, ctx, note, raf = 0, last = 0, colorAt = 0, fg = "#000", rule = "#888";
   var mask = null, pig = null, pigW = PIG_H, tinted = "";
-  var state, y, vy, speed, dist, obs, nextGap, top3, frameT, overAt, groundSeed, form, lastScore;
+  var state, y, vy, speed, dist, obs, nextGap, best, frameT, overAt, groundSeed;
 
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
@@ -103,7 +103,7 @@
   }
 
   function jump() {
-    if (state === "over") { if (Date.now() - overAt < 450) return; form.hidden = true; reset(); state = "run"; return; }
+    if (state === "over") { if (Date.now() - overAt < 450) return; reset(); state = "run"; return; }
     if (state === "ready") state = "run";
     if (y === 0) vy = JUMP;
   }
@@ -131,8 +131,8 @@
       var hit = o.s.top ? (px2 > ox1 && px1 < ox2 && py1 < LAMP_BOTTOM - 4) : (px2 > ox1 && px1 < ox2 && py2 > oy1);
       if (hit) {
         state = "over"; overAt = Date.now();
-        lastScore = Math.floor(dist / 10);
-        if (qualifies(lastScore)) askName(lastScore);
+        var sc = Math.floor(dist / 10);
+        if (sc > best) { best = sc; try { localStorage.setItem("pigBest", String(best)); } catch (e) {} }
         break;
       }
     }
@@ -192,16 +192,11 @@
     // 글자
     ctx.font = "15px serif"; ctx.textBaseline = "top"; ctx.textAlign = "right";
     var sc = Math.floor(dist / 10);
-    ctx.fillText((top3.length ? "최고 " + top3[0].s + "   " : "") + sc, W - 6, 6);
+    ctx.fillText((best ? "최고 " + best + "   " : "") + sc, W - 6, 6);
     ctx.textAlign = "center";
-    if (state === "ready") ctx.fillText("스페이스나 화면을 누르면 달립니다", W / 2, 46);
+    if (state === "ready") ctx.fillText("스페이스나 화면을 누르면 달립니다", W / 2, 62);   // 글자는 배튼 아래, 돼지 위
     if (state === "over") {
-      ctx.fillText("부딪혔다!", W / 2, 30); ctx.fillStyle = rule; ctx.fillText("다시 하려면 누르세요", W / 2, 50);
-      if (top3.length) {                            // 이 기기에서 세운 기록 3위까지
-        ctx.textAlign = "left"; ctx.font = "13px serif";
-        ctx.fillText("이 기기 기록", 8, 8); ctx.fillStyle = fg;
-        top3.forEach(function (r, i) { ctx.fillText((i + 1) + ". " + r.n + "  " + r.s, 8, 26 + i * 17); });
-      }
+      ctx.fillText("부딪혔다!", W / 2, 56); ctx.fillStyle = rule; ctx.fillText("다시 하려면 누르세요", W / 2, 76);
     }
   }
 
@@ -213,35 +208,12 @@
   }
 
   function onKey(e) {
-    if (e.key === "Escape") { if (!form.hidden && document.activeElement === form.querySelector("input")) { form.hidden = true; document.activeElement.blur(); } else close(); return; }
+    if (e.key === "Escape") { close(); return; }
     if (e.key === " " || e.key === "ArrowUp" || e.key === "w") {
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
       e.preventDefault(); if (!e.repeat) jump();
     }
-  }
-  function loadTop() {
-    try {
-      var t = JSON.parse(localStorage.getItem("pigTop") || "[]");
-      if (!t.length) { var b = parseInt(localStorage.getItem("pigBest") || "0", 10); if (b) t = [{ n: "?", s: b }]; }
-      return t.slice(0, 3);
-    } catch (e) { return []; }
-  }
-  function saveTop() { try { localStorage.setItem("pigTop", JSON.stringify(top3)); } catch (e) {} }
-  function qualifies(sc) { return sc >= 30 && (top3.length < 3 || sc > top3[top3.length - 1].s); }
-  function askName(sc) {                            // 3위 안에 들면 캔버스 아래에 이름 칸을 띄운다
-    var place = top3.filter(function (r) { return r.s >= sc; }).length + 1;
-    form.hidden = false;
-    form.querySelector("span").textContent = place + "위! " + sc + "점. 이름을 남기세요 ";
-    var inp = form.querySelector("input"); inp.value = "";
-    setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
-  }
-  function submitName(e) {
-    if (e) e.preventDefault();
-    var n = form.querySelector("input").value.replace(/\s+/g, " ").trim().slice(0, 10) || "익명";
-    top3.push({ n: n, s: lastScore }); top3.sort(function (a, b) { return b.s - a.s; }); top3 = top3.slice(0, 3);
-    saveTop(); form.hidden = true;
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
   function onKeyUp(e) {                             // 로고 버튼에 초점이 남아 있으면 스페이스가 밤낮을 바꾸므로 막는다
     if (e.key === " " && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "")) e.preventDefault();
@@ -250,6 +222,9 @@
 
   function fit() {                                  // 화면 픽셀에 맞춰 선명하게
     var r = Math.min(4, window.devicePixelRatio || 1), cw = canvas.clientWidth || W;
+    // 좁은 화면(휴대폰)에서는 게임 안 폭을 줄여 그림이 덜 작아지게 한다. 대신 앞이 조금 덜 보인다
+    W = Math.round(Math.max(440, Math.min(600, cw)));
+    canvas.style.aspectRatio = W + "/" + H;
     var scale = cw / W * r;
     canvas.width = Math.round(cw * r); canvas.height = Math.round(H * cw / W * r);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -257,17 +232,15 @@
 
   function open() {
     if (box) { jump(); return; }
-    top3 = loadTop();
+    try { best = parseInt(localStorage.getItem("pigBest") || "0", 10) || 0; } catch (e) { best = 0; }
     box = document.createElement("div");
     box.id = "pig-game";
     box.innerHTML = '<canvas role="img" aria-label="돼지 달리기 게임. 스페이스나 화면을 눌러 점프" style="display:block;width:100%;max-width:' + W + 'px;aspect-ratio:' + W + '/' + H + ';touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"></canvas>' +
-      '<form hidden style="margin:6px 0 0"><span></span><input maxlength="10" size="10" aria-label="이름" autocomplete="off" enterkeyhint="done"> <button type="submit">남기기</button></form>' +
       '<p class="note" style="margin:4px 0 0">돼지 달리기 · 스페이스·↑·화면 누르기로 점프 · <a href="#" class="hid" style="text-decoration:underline">닫기</a></p>';
     var anchor = document.querySelector(".night");
     var at = anchor && anchor.closest("p");
     if (at && at.parentNode) at.parentNode.insertBefore(box, at.nextSibling); else document.body.insertBefore(box, document.body.firstChild);
     canvas = box.querySelector("canvas"); ctx = canvas.getContext("2d");
-    form = box.querySelector("form"); form.addEventListener("submit", submitName);
     canvas.addEventListener("pointerdown", function (e) { e.preventDefault(); jump(); });
     box.querySelector("a").addEventListener("click", function (e) { e.preventDefault(); close(); });
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();

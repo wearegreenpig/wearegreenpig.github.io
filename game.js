@@ -123,6 +123,7 @@
   function step(dt) {
     if (state === "end") {                         // 커튼콜: 돼지가 무대 가운데로 걸어 나와 인사
       endT += dt;
+      if (y > 0 || vy > 0) { y += vy * dt; vy -= GRAV * dt; if (y <= 0) { y = 0; vy = 0; } }
       pigX += (W / 2 - pigW / 2 - pigX) * Math.min(1, dt / 400);
       return;
     }
@@ -166,17 +167,18 @@
 
   function perf(i) { return DATA[Math.max(0, Math.min(N - 1, i))] || ["", "", "", ""]; }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var touch = window.matchMedia && matchMedia("(pointer: coarse)").matches;
   function setStatus() {                           // 캔버스 아래 한 줄: 안내, 멈춘 공연(작품 페이지로), 완주
     if (!status) return;
     var close = ' · <a href="#" class="hid" data-close style="text-decoration:underline">닫기</a>';
     var h;
     if (state === "over" && hitAt >= 0) {
       var p = perf(hitAt);
-      h = '멈춘 곳: <a href="' + esc(p[3]) + '">' + esc(p[0]) + " 〈" + esc(p[1]) + "〉</a> · 처음부터 다시 하려면 누르세요";
+      h = '멈춘 곳: <a href="' + esc(p[3]) + '">' + esc(p[0]) + " 〈" + esc(p[1]) + "〉</a>";
     } else if (state === "end") {
-      h = '완주! 2006년부터 지금까지 공연 ' + N + '편. <a href="archive.html">아카이브</a>에서 다시 보기';
+      h = '완주! <a href="archive.html">아카이브</a>에서 다시 보기';
     } else {
-      h = "돼지 달리기 · 공연 하나가 장애물 하나 · 스페이스·↑·화면 누르기로 점프";
+      h = touch ? "돼지 달리기 · 화면을 눌러 점프" : "돼지 달리기 · 스페이스·↑·화면 누르기로 점프";   // 휴대폰에서 한 줄로
     }
     status.innerHTML = h + close;
   }
@@ -254,6 +256,7 @@
       ctx.save();
       ctx.translate(pigX + pigW / 2, GROUND - y - bob - PIG_H / 2 + 2);
       ctx.rotate(tilt);
+      if (state === "end") { ctx.fillStyle = bg; ctx.fillRect(-pigW / 2 + 3, -PIG_H / 2 + 2, pigW - 6, PIG_H - 6); }   // 막 앞에 선 돼지
       ctx.drawImage(pig, -pigW / 2, -PIG_H / 2, pigW, PIG_H);
       ctx.restore();
     }
@@ -277,7 +280,7 @@
     ctx.fillText(fitText(cap, W - yw - rightW - 6), yw, 30);
     // 가운데 안내
     ctx.textAlign = "center"; ctx.font = "15px serif"; ctx.fillStyle = fg;
-    if (state === "ready") { ctx.fillText("2006년부터 지금까지, 공연 " + N + "편을 넘어 보세요", W / 2, 84); ctx.fillStyle = rule; ctx.fillText("스페이스나 화면을 누르면 출발", W / 2, 106); }
+    if (state === "ready") { ctx.fillText("2006년부터 지금까지, 공연 " + N + "편을 넘어 보세요", W / 2, 84); ctx.fillStyle = rule; ctx.fillText(touch ? "화면을 누르면 출발" : "스페이스나 화면을 누르면 출발", W / 2, 106); }
     if (state === "over") { ctx.fillText("부딪혔다!", W / 2, 84); ctx.fillStyle = rule; ctx.fillText("처음부터 다시 하려면 누르세요", W / 2, 106); }
     if (state === "end" && endT > 900) {           // 막 위에 글자판
       var msg = "2006–" + perf(N - 1)[0] + " · 공연 " + N + "편 완주";

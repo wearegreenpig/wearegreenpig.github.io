@@ -3,6 +3,7 @@
 // 숨은 놀이: 로고를 빠르게 다섯 번 누르면 밤낮을 처음 상태로 되돌리고 돼지 달리기(game.js)를 연다.
 (function () {
   var root = document.documentElement;
+  var base = (document.currentScript && document.currentScript.src || "").replace(/[^/]*$/, "");   // theme.js가 있는 폴더 (영어판 en/에서도 game.js를 찾도록)
   try { var t = localStorage.getItem("theme"); if (t) root.setAttribute("data-theme", t); } catch (e) {}
   var taps = [], before = null;
   function saved() { try { return localStorage.getItem("theme"); } catch (e) { return null; } }
@@ -13,7 +14,7 @@
   function openGame() {
     if (window.pigGame) { window.pigGame.open(); return; }
     var s = document.createElement("script");
-    s.src = "game.js";
+    s.src = base + "game.js";
     s.onload = function () { if (window.pigGame) window.pigGame.open(); };
     document.head.appendChild(s);
   }

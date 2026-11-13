@@ -647,3 +647,38 @@ OTHER = """
 2022.9.27 〈나무는 신발가게를 찾아가지 않는다〉 / 서경대 스콘2관 - 서울아트마켓 PAMS Choice
 2023.8.18 〈등산하는 아이들〉 주은길 작, 윤한솔 연출 / 대학로예술극장 소극장 - 낭독
 """
+
+# ---- 평론가의 글 (2026.11.13 추가) ----
+# 리뷰 한 줄에 다섯째 칸으로 글쓴이를 적을 수 있다: (날짜, 주소, 설명, 출처, 글쓴이)
+# 글쓴이를 적지 않아도 아래 WRITERS에 있는 주소는 자동으로 글쓴이가 붙는다.
+WRITERS = {
+    "blog.naver.com/purun8/": "이경미",
+    "blog.naver.com/kimockran/": "김옥란",
+}
+CRITICS = {"이경미", "김옥란", "김건표", "박효경"}   # 평론가로 분류할 글쓴이
+E = K = "네이버 블로그"
+add("10", 리뷰=[("2012.6.14", "https://blog.naver.com/purun8/150140677025", "고립된 지식, 고립된 연극의 나르시시즘에 대하여", E)])
+add("27", 리뷰=[("2015", "https://blog.naver.com/purun8/220553482755", "리뷰", E)])
+add("42", 리뷰=[("2021", "https://blog.naver.com/purun8/222275476522", "리뷰", E)])
+add("17", 리뷰=[("2022.4.15", "https://blog.naver.com/purun8/222701745367", "리뷰", E)])
+add("53", 리뷰=[("2023.4.30", "https://blog.naver.com/purun8/223089045065", "리뷰", E)])
+add("62", 리뷰=[("2024.8.15", "https://blog.naver.com/purun8/223549195968", "주은길과 극단 그린피그의 정치적으로 연극하기", E),
+                ("2024.8.12", "https://blog.naver.com/kimockran/223545727065", "리뷰", K)])
+add("65", 리뷰=[("2024.12.25", "https://blog.naver.com/purun8/223705073325", "리뷰", E)])
+add("59", 리뷰=[("2025.12.6", "https://blog.naver.com/purun8/224100237800", "대산문학상 희곡 부문 수상작 리뷰", E),
+                ("2026.6.10", "https://saicriticism.com/%EB%8B%A8%ED%8F%89-%EC%96%91%EB%96%BC%EB%AA%A9%EC%9E%A5%EC%9D%98%EB%8C%80%ED%98%88%ED%88%AC/", "단평", "사이 비평", "박효경"),
+                ("2026.5.30", "https://blog.naver.com/kimockran/224300521405", "리뷰 (2026 세실)", K),
+                ("2024.4.6", "https://blog.naver.com/kimockran/223407889251", "리뷰 (2024 혜화)", K)])
+add("71", 리뷰=[("2026.11", "https://blog.naver.com/purun8/224472895578", "리뷰", E)])
+add("2024-02", 리뷰=[("2024.2.7", "https://www.imaeil.com/page/view/2024020710393105944", "불멸의 영웅과 위인이 될 수 없는 시대의 역설", "매일신문", "김건표")])
+add("2024-05", 리뷰=[("2024.5.10", "https://blog.naver.com/kimockran/223442916141", "리뷰", K)])
+add("61", 리뷰=[("2024.6.16", "https://blog.naver.com/kimockran/223480661984", "리뷰", K)])
+add("2024-07", 리뷰=[("2024.7.7", "https://blog.naver.com/kimockran/223504264143", "리뷰", K)])
+add("2024-09", 리뷰=[("2024.9.15", "https://blog.naver.com/kimockran/223584855223", "리뷰", K)])
+add("2024-11", 리뷰=[("2024", "https://blog.naver.com/kimockran/223697084800", "리뷰", K)])
+YS_REVIEWS.insert(0, ("2025.1.18", "https://blog.naver.com/kimockran/223729672666", "역사시비 프로젝트 리뷰, 『한국연극』", K))
+
+# 그린피그에 관한 글 (텍스트 페이지 맨 아래)
+ESSAYS = [
+    ("2014.10.16", "https://www.sfac.or.kr/site/theater/WZ020300/webzine_view.do?wtIdx=10790", "최윤우, 「[극단적인 연극사(私)] 극단 그린피그 – 불편한 이야기는 불편하게」 (서울연극센터 웹진 연극in)"),
+]

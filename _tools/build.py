@@ -1,6 +1,6 @@
 import sys, re, os
 sys.path.insert(0, os.path.dirname(__file__))
-from works_data import PERFORMANCES, EXTRA, YS_REVIEWS, OTHER
+from works_data import PERFORMANCES, EXTRA, YS_REVIEWS, OTHER, WRITERS, CRITICS, ESSAYS
 
 SITE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 사이트 폴더 = _tools 의 한 단계 위
 
@@ -134,9 +134,25 @@ HEAD = """<!doctype html>
 <link rel="stylesheet" href="style.css">
 """
 
-def rev_line(x):
-    d, u, label, src = x
-    return f'{d} <a href="{u}">{label}</a>' + (f" ({src})" if src else "")
+# 리뷰 한 줄: (날짜, 주소, 설명, 출처[, 글쓴이]) → 글쓴이와 종류(평론·기사·관객)를 붙인다
+NEWS = {"경향신문", "노컷뉴스", "이데일리", "뉴데일리", "민중의소리", "매일노동뉴스", "Today's Theater in Seoul", "네이버 포스트"}
+def rev(x):
+    d, u, label, src = x[:4]
+    w = x[4] if len(x) > 4 else next((n for k, n in WRITERS.items() if k in u), "")
+    if w in CRITICS and label.startswith("관람 후기"):
+        label = "리뷰" + label[len("관람 후기"):]
+    if w in CRITICS or any(k in label for k in ("비평", "평론", "단평")):
+        kind = "평론"
+    elif "기사" in label or "소개" in label or "칼럼" in label or src in NEWS:
+        kind = "기사"
+    else:
+        kind = "관객"
+    return {"d": d, "u": u, "t": label, "s": src, "w": w, "k": kind}
+
+def rev_line(x, work=""):
+    r = x if isinstance(x, dict) else rev(x)
+    who = ", " + r["w"] if r["w"] else ""
+    return f'{r["d"]} {work}<a href="{r["u"]}">{r["t"]}</a>{who}' + (f' ({r["s"]})' if r["s"] else "")
 
 def dkey(d):
     return tuple(int(p) for p in d.split("."))
@@ -155,8 +171,7 @@ for i, slug in enumerate(order):
     t = w["title"]
     out = [HEAD.format(t=t)]
     out.append(f'<p><a href="index.html">그린피그</a> &gt; <a href="archive.html">아카이브</a> &gt; {t}</p>\n')
-    out.append(f"<h2>〈{t}〉</h2>")
-    out.append(f"<p>{linkify(w['credit'])}</p>\n")
+    out.append(f"<h2>{t}</h2>\n")   # 제목만 홀로 서 있으므로 〈 〉 없이   # 작·연출 줄은 제목 밑에 두지 않는다. 크레딧이 없는 작품은 아래 크레딧 자리에 넣는다
     if os.path.exists(f"{SITE}/w{slug}.jpg"):
         files = [f"w{slug}.jpg"]
         n = 2
@@ -186,6 +201,8 @@ for i, slug in enumerate(order):
         out.append("<h3>수상</h3>\n<p>\n" + "<br>\n".join(ex["수상"]) + "\n</p>\n")
     if "크레딧" in ex:
         out.append("<h3>크레딧</h3>\n<p>\n" + "<br>\n".join(f"{k}: {linkify(v, k)}" for k, v in ex["크레딧"]) + "\n</p>\n")
+    else:
+        out.append(f"<h3>크레딧</h3>\n<p>{linkify(w['credit'])}</p>\n")
     if "리뷰" in ex:
         out.append("<h3>리뷰·기사</h3>\n<p>\n" + "<br>\n".join(rev_line(x) for x in sorted(ex["리뷰"], key=lambda x: dkey(x[0]), reverse=True)) + "\n</p>\n")
     if "비평" in ex:
@@ -243,24 +260,48 @@ a.append(tail)
 open(f"{SITE}/archive.html", "w").write("\n".join(a))
 print(len(order), "works,", len(rows), "performances")
 
-# 텍스트 페이지의 관객 리뷰 부분 다시 만들기 (작품별, 최근 공유 순)
+# 텍스트 페이지의 리뷰·기사 부분 다시 만들기
+# 기본은 작품별(최근 글이 있는 작품 순). 자바스크립트가 켜져 있으면 글쓴이별·최근 순 보기와 종류 고르기가 생긴다.
+import json as _json
+allrev = []          # 한 줄 = 글 하나
 groups = []
+def _collect(key, head, items, slug, title):
+    rs = []
+    for x in items:
+        r = rev(x); r["p"] = page(slug) if slug else ""; r["n"] = title
+        rs.append(r); allrev.append(r)
+    rs.sort(key=lambda r: dkey(r["d"]), reverse=True)
+    groups.append((dkey(rs[0]["d"]), head, rs))
 for slug in order:
     revs = EXTRA.get(slug, {}).get("리뷰")
     if revs:
-        revs = sorted(revs, key=lambda x: dkey(x[0]), reverse=True)
         y = works[slug]["rows"][0]["date"][:4]
-        groups.append((dkey(revs[0][0]), f'<b><a href="{page(slug)}">〈{works[slug]["title"]}〉</a> {y}</b>', revs))
-groups.append((dkey(YS_REVIEWS[0][0]), "<b>역사시비프로젝트 2024 (전반)</b>", YS_REVIEWS))
+        _collect(slug, f'<b><a href="{page(slug)}">〈{works[slug]["title"]}〉</a> {y}</b>', revs, slug, works[slug]["title"])
+_collect("ys", "<b>역사시비프로젝트 2024 (전반)</b>", YS_REVIEWS, "", "역사시비프로젝트")
 groups.sort(key=lambda g: g[0], reverse=True)
-block = '<h3 id="reviews">관객 리뷰·기사</h3>\n\n'
-block += "\n\n".join("<p>" + h + "<br>\n" + "<br>\n".join(rev_line(x) for x in revs) + "\n</p>" for _, h, revs in groups) + "\n\n"
+cnt = {k: sum(1 for r in allrev if r["k"] == k) for k in ("평론", "기사", "관객")}
+crit = {}
+for r in allrev:
+    if r["w"] in CRITICS: crit[r["w"]] = crit.get(r["w"], 0) + 1
+critics = sorted(crit, key=lambda w: -crit[w])
+block = '<h3 id="reviews">리뷰·기사</h3>\n\n'
+block += ('<p class="rvctl noprint" hidden>보기: <a href="#" data-v="work">작품별</a> · <a href="#" data-v="writer">글쓴이별</a> · <a href="#" data-v="date">최근 순</a><br>\n'
+          f'종류: <a href="#" data-k="">전체 {len(allrev)}</a> · <a href="#" data-k="평론">평론 {cnt["평론"]}</a> · '
+          f'<a href="#" data-k="기사">기사 {cnt["기사"]}</a> · <a href="#" data-k="관객">관객 후기 {cnt["관객"]}</a><br>\n'
+          '평론가: <a href="#" data-w="">전체</a> · ' + " · ".join(f'<a href="#" data-w="{w}">{w} {crit[w]}</a>' for w in critics) + '</p>\n\n')
+block += '<div id="rv">\n' + "\n\n".join("<p>" + h + "<br>\n" + "<br>\n".join(rev_line(r) for r in rs) + "\n</p>" for _, h, rs in groups) + "\n</div>\n"
+block += ("<script>var RV=" + _json.dumps(sorted(allrev, key=lambda r: dkey(r["d"]), reverse=True), ensure_ascii=False, separators=(",", ":"))
+          + ",RC=" + _json.dumps(critics, ensure_ascii=False) + ";</script>\n<script src=\"texts.js\" defer></script>\n\n")
 t = open(f"{SITE}/texts.html").read()
 a, b = t.index('<h3 id="reviews">'), t.index('<h3 id="criticism">')
 t = t[:a] + block + t[b:]
-t = t.replace('<a href="#reviews">관객 리뷰</a>', '<a href="#reviews">관객 리뷰·기사</a>')
+t = re.sub(r'<p><a href="#reviews">.*?</p>', '<p><a href="#reviews">리뷰·기사</a> | <a href="#criticism">지면 비평</a> | <a href="#essays">그린피그에 관한 글</a></p>', t, count=1, flags=re.S)
+t = t.replace('<h3 id="criticism">비평</h3>', '<h3 id="criticism">지면 비평</h3>')
+# 그린피그에 관한 글: 주소가 있는 글(ESSAYS)을 위에, 포트폴리오 수록 글은 아래에
+ess = "".join(f'{d[:4]} <a href="{u}">{label}</a><br>\n' for d, u, label in sorted(ESSAYS, key=lambda e: dkey(e[0]), reverse=True))
+t = re.sub(r'(<h3 id="essays">그린피그에 관한 글</h3>\n<p>\n)(?:\d{4} <a href="[^"]*">.*?</a><br>\n)*', lambda m: m.group(1) + ess, t, count=1)
 open(f"{SITE}/texts.html", "w").write(t)
-print(len(groups), "review groups")
+print(len(groups), "review groups,", len(allrev), "texts", cnt, crit)
 
 
 # ---- 참여 기록 페이지(who.html)와 사람 페이지의 이름 링크 ----
@@ -278,7 +319,7 @@ h.append("<h2>참여 기록</h2>")
 h.append("<p>" + " ".join(f'<a href="#{c}">{c}</a>' for c in INITIALS if c in groups_by_init) + "</p>\n")
 for c in INITIALS:
     if c not in groups_by_init: continue
-    h.append(f'<h3 id="{c}">{c}</h3>')
+    h.append(f'<h3 id="{c}">{c}</h3>\n<div class="cols">')
     for n in groups_by_init[c]:
         items = []  # (최근 연도, 작품 순서, 줄)
         for s_, roles in people[n].items():
@@ -289,6 +330,7 @@ for c in INITIALS:
                 items.append((ys[-1], pos[s_], f'{", ".join(ys)} <a href="{page(s_)}">〈{works[s_]["title"]}〉</a> {", ".join(rs)}'))
         items.sort(key=lambda x: (x[0], x[1]), reverse=True)
         h.append(f'<p id="{anchor(n)}"><b>{show(n)}</b><br>\n' + "<br>\n".join(x[2] for x in items) + "\n</p>")
+    h.append("</div>")
 h.append('\n<hr>\n<p><a href="people.html">사람으로 돌아가기</a></p>\n')
 open(f"{SITE}/who.html", "w").write("\n".join(h))
 
@@ -355,14 +397,14 @@ script = ("<!-- 오늘 -->\n<p id=\"today\" hidden></p>\n<script>\n"
   "(function(){var P=" + _json.dumps(data, ensure_ascii=False) + ";\n"
   "var t=new Date(),Y=t.getFullYear(),M=t.getMonth()+1,D=t.getDate(),open=[],run=[];\n"
   "P.forEach(function(p){if(p[0]>=Y)return;var n=Y-p[0],s=new Date(p[0],p[1]-1,p[2]),e=new Date(p[3],p[4]-1,p[5]),d=new Date(p[0],M-1,D),d2=new Date(p[0]+1,M-1,D);\n"
-  "var x=function(k){return k+'년 전 오늘, <a href=\"'+p[7]+'\">〈'+p[6]+'〉</a> ';};\n"
+  "var x=function(k){return k+'년 전 오늘, <a href=\"'+p[7]+'\">'+p[6]+'</a> ';};\n"
   "if(p[1]==M&&p[2]==D)open.push(x(n)+'개막 ('+p[8]+')');else if(d>s&&d<=e)run.push(x(n)+'공연 중 ('+p[8]+')');else if(d2>s&&d2<=e&&p[0]+1<Y)run.push(x(n-1)+'공연 중 ('+p[8]+')');});\n"
   "var l=open.concat(run).slice(0,2);if(l.length){var el=document.getElementById('today');el.innerHTML=l.join('<br>');el.hidden=false;}})();\n"
   "</script>\n<!-- /오늘 -->\n")
 ix = open(f"{SITE}/index.html").read()
 ix = re.sub(r"<!-- 오늘 -->.*?<!-- /오늘 -->\n", "", ix, flags=re.S)
 k = ix.rindex("<hr>")                       # 소식 아래, 이메일 위
-ix = ix[:k] + script + "\n" + ix[k:]
+ix = ix[:k].rstrip("\n") + "\n\n" + script + "\n" + ix[k:]
 open(f"{SITE}/index.html", "w").write(ix)
 
 
@@ -406,7 +448,7 @@ for slug in order:
     places = ", ".join(dict.fromkeys(v for r in w["rows"] for v in venues_of(r["venue"])))
     names = " ".join(n for role, ns in ex.get("크레딧", []) for n in ns.split(","))
     hay = " ".join([w["title"], w["credit"], places, " ".join(r["date"] for r in w["rows"]), names, ex.get("소개", "")])
-    idx.append(["작품", f'〈{w["title"]}〉', page(slug), f'{yr}. {w["credit"]}', hay])
+    idx.append(["작품", w["title"], page(slug), f'{yr}. {w["credit"]}', hay])
 for k in sorted(people):
     idx.append(["사람", show(k), f"who.html#{anchor(k)}", f"{len(people[k])}작품", k])
 for v, rs in sorted(by_venue.items()):
@@ -420,6 +462,16 @@ open(f"{SITE}/search.js", "w").write(
 ar = open(f"{SITE}/archive.html").read().replace("{N_PEOPLE}", str(len(people)))
 open(f"{SITE}/archive.html", "w").write(ar)
 
+# ---- 소개 페이지 첫 화면: 작품 제목 돌리기 ----
+rot = ("<!-- 제목 돌리기 (build.py가 자동 생성) -->\n"
+       '<div class="rotator" aria-label="그린피그의 작품들">\n'
+       + "\n".join(f'<a href="{page(s_)}">{works[s_]["title"]}</a>' for s_ in reversed(order))
+       + '\n</div>\n<script src="rotator.js" defer></script>\n<!-- /제목 돌리기 -->\n')
+ab = open(f"{SITE}/about.html").read()
+if "<!-- 제목 돌리기" in ab:
+    ab = re.sub(r"<!-- 제목 돌리기.*?<!-- /제목 돌리기 -->\n", lambda m: rot, ab, flags=re.S)
+    open(f"{SITE}/about.html", "w").write(ab)
+
 # 공통 머리말과 최종 수정 날짜
 # ---- 돼지 달리기(game.js)의 코스: 공연 기록을 오래된 순으로 ----
 pig = [[r["date"][:4], r["title"], r["venue"].split(";")[0].strip(), page(r["slug"])]
@@ -428,6 +480,11 @@ open(f"{SITE}/pig-data.js", "w").write(
     "// 돼지 달리기 코스: 공연 기록 [연도, 제목, 공연장, 작품 페이지] (build.py가 자동 생성)\nwindow.PIG_DATA = "
     + _json.dumps(pig, ensure_ascii=False) + ";\n")
 print(len(pig), "pig course")
+
+# ---- 영어판 (en/) ----
+today_data = data
+import build_en
+build_en.run(globals())
 
 import finish
 finish.main()

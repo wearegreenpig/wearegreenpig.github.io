@@ -1,10 +1,14 @@
-/* 그린피그 사이트 공통 스타일. 브라우저 기본 모양을 그대로 두고 색과 여백만 정한다. */
+/* 그린피그 사이트 공통 스타일. 브라우저 기본 모양을 거의 그대로 두고 글꼴, 색, 여백만 정한다. */
+/* 글꼴: Pretendard (SIL OFL). 쓰인 글자 묶음만 내려받는다 (fonts/) */
+@import url("fonts/pretendard.css");
 :root { --bg: #ffffff; --fg: #000000; --link: #0000ee; --visited: #551a8b; --rule: #888888; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #121212; --fg: #e4e4e4; --link: #8ab4f8; --visited: #c58af9; --rule: #666666; color-scheme: dark } }
 :root[data-theme="dark"] { --bg: #121212; --fg: #e4e4e4; --link: #8ab4f8; --visited: #c58af9; --rule: #666666; color-scheme: dark }
-body { background: var(--bg); color: var(--fg); font-family: serif; font-size: 16px; line-height: 1.5; margin: 0;
+body { background: var(--bg); color: var(--fg); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: 16px; line-height: 1.5; margin: 0; word-break: keep-all; overflow-wrap: break-word;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; }
-a { color: var(--link); } a:visited { color: var(--visited); }
+a { color: var(--link); text-decoration: none; } a:visited { color: var(--visited); }
+/* 밑줄은 마우스를 올렸을 때만 */
+a:hover, .find:hover span { text-decoration: underline; text-underline-offset: 0.25em; }
 hr { border: 0; border-top: 1px solid var(--rule); }
 .wide { overflow-x: auto; }
 td, th { vertical-align: top; text-align: left; padding: 2px 12px 2px 0; }
@@ -21,6 +25,7 @@ table.chrono th, table.chrono td { border-bottom: 1px solid var(--rule); padding
   a { color: #000; text-decoration: none; }
   .noprint { display: none; }
   .wide { overflow: visible; }
+  .rotator, .find { display: none; }
   table.chrono { font-size: 8.5pt; width: 100%; }
   table.chrono th, table.chrono td { border-bottom: 0.5pt solid #999; padding: 2pt 6pt 2pt 0; }
   table.chrono tr { break-inside: avoid; }
@@ -35,3 +40,28 @@ button.night:focus:not(:focus-visible){outline:none}
 /* 작품 페이지의 대표 공연 사진: 화면 폭에 맞춰 줄어든다 */
 .scene img{max-width:100%;height:auto}
 .scene small{color:var(--rule)}
+/* 찾기: 링크처럼 생긴 입력칸. 누르면 그 자리에서 글자를 쓰고, 엔터를 치면 찾기 페이지로 간다 */
+.find{display:inline-block;position:relative;margin:0}
+.find input{font:inherit;color:var(--link);background:transparent;border:0;border-radius:0;padding:0;margin:0;width:1.85em;-webkit-appearance:none;appearance:none;cursor:pointer;outline:none;box-shadow:none}
+.find input::placeholder{color:transparent}
+.find input::-webkit-search-decoration,.find input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.find span{position:absolute;left:0;top:0;white-space:nowrap;color:var(--link);pointer-events:none}
+.find input:focus+span,.find input:not(:placeholder-shown)+span{display:none}
+.find input:focus,.find input:not(:placeholder-shown){width:9em;cursor:text}
+@supports (field-sizing:content){.find input,.find input:focus,.find input:not(:placeholder-shown){field-sizing:content;width:auto;min-width:1em;max-width:70vw}}
+.find.big{display:block;position:relative}
+.find.big input,.find.big input:focus,.find.big input:not(:placeholder-shown){width:100%;max-width:none;font-weight:inherit}
+/* 여러 단으로 흐르는 목록. 줄이 넘치면 둘째 줄부터 들여 쓴다 */
+ul.cols{list-style:none;padding:0;margin:0 0 1em;columns:20rem 4;column-gap:2rem}
+ul.cols li{break-inside:avoid;padding-left:1em;text-indent:-1em}
+div.cols{columns:20rem 4;column-gap:2rem}
+div.cols>p{break-inside:avoid;margin:0 0 1em}
+/* 소개 페이지 첫 화면: 작품 제목이 1초마다 바뀐다 (rotator.js) */
+.rotator{display:grid;place-items:center;min-height:75vh;min-height:75svh;text-align:center}
+.rotator a,.rotator a:visited{display:block;color:var(--fg);text-decoration:none;font-weight:900;font-size:clamp(2.25rem,9vw,6.5rem);line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+.rotator a:hover{text-decoration:underline;text-decoration-thickness:.05em;text-underline-offset:.1em}
+.rotator a:not(:first-child){display:none}
+/* 텍스트 페이지의 보기 고르기: 고른 것은 검은 글씨 */
+.rvctl a.on,.rvctl a.on:visited{color:var(--fg);text-decoration:none;cursor:default}
+/* 한국어/영어 전환 링크: 오른쪽 위 */
+.lang{float:right;margin:1em 0 0 1em}

@@ -3,13 +3,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>찾기 - 그린피그</title>
-<link rel="stylesheet" href="style.css?v=86d138cd">
+<link rel="stylesheet" href="style.css?v=8db19f05">
 <!-- 공통 머리말 -->
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="author" href="humans.txt">
 <script src="random.js" defer></script>
 <script src="theme.js"></script>
+<link rel="alternate" hreflang="en" href="https://wearegreenpig.github.io/en/search.html">
 <meta name="description" content="그린피그의 작품, 사람, 극장 찾기.">
 <meta property="og:site_name" content="그린피그">
 <meta property="og:title" content="찾기 - 그린피그">
@@ -19,16 +20,12 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <!-- /공통 머리말 -->
+<p class="lang noprint"><a href="en/search.html" hreflang="en" lang="en">English</a></p>
 <script src="search.js" defer></script>
 
 <p><a href="index.html">그린피그</a> &gt; 찾기</p>
 
-<h2>찾기</h2>
-
-<form action="search.html" role="search">
-<input type="search" name="q" id="q" size="24" aria-label="찾을 말" placeholder="작품, 사람, 극장" autocomplete="off">
-<button type="submit">찾기</button>
-</form>
+<form action="search.html" role="search"><h2 class="find big"><input type="search" name="q" id="q" placeholder="찾을 말" aria-label="찾을 말" enterkeyhint="search" autocomplete="off"><span aria-hidden="true">찾을 말을 여기에</span></h2></form>
 
 <p class="note">작품 제목·소개·크레딧, 사람 이름, 극장 이름에서 찾습니다. 여러 낱말을 넣으면 모두 들어간 것만 나옵니다.</p>
 
@@ -63,9 +60,9 @@ window.addEventListener("DOMContentLoaded", function () {
     KINDS.forEach(function (k) {
       var g = hits.filter(function (d) { return d.kind === k; });
       if (!g.length) return;
-      html += "<h3>" + k + " (" + g.length + ")</h3>\n<p>" + g.map(function (d) {
-        return '<a href="' + d.href + '">' + esc(d.label) + "</a> " + esc(d.extra);
-      }).join("<br>\n") + "</p>\n";
+      html += "<h3>" + k + " (" + g.length + ")</h3>\n<ul class=\"cols\">\n" + g.map(function (d) {
+        return '<li><a href="' + d.href + '">' + esc(d.label) + "</a> " + esc(d.extra) + "</li>";
+      }).join("\n") + "\n</ul>\n";
     });
     out.innerHTML = html;
   }
@@ -74,8 +71,7 @@ window.addEventListener("DOMContentLoaded", function () {
   box.addEventListener("input", run);
   box.form.addEventListener("submit", function (e) { e.preventDefault(); run(); });
   run();
-  if (!q0) box.focus();
 });
 </script>
 
-<p class="updated"><a class="hid" href="colophon.html">발행일</a> 2026.11.9</p>
+<p class="updated"><a class="hid" href="colophon.html">발행일</a> 2026.11.13</p>

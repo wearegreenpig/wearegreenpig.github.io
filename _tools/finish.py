@@ -40,14 +40,28 @@ def describe(name, text):
     m = re.search(r"<h3>작품 소개</h3>\s*<p>(.*?)</p>", text, re.S)
     if m:  # 역사시비 작품은 공통 머리 문장을 빼고 그 달의 설명부터
         return short(re.sub(r"^역사시비프로젝트:.*?올렸다\.\s*", "역사시비프로젝트 ", plain(m.group(1))))
-    m = re.search(r"</h2>\s*<p>(.*?)</p>", text, re.S)
-    return short(plain(m.group(1))) if m else DESC["index.html"]
+    m = re.search(r"<h3>크레딧</h3>\s*<p>(.*?)</p>", text, re.S)   # 소개가 없는 작품은 크레딧으로
+    d = short(plain(m.group(1)).replace("\n", ", ")) if m else ""
+    return d or DESC["index.html"]
 
-CSS_RE = re.compile(r'<link rel="stylesheet" href="(/?)style\.css(?:\?v=\w+)?">')
+# 링크가 걸린 작품명은 파란 글씨로 구분되므로 〈 〉를 뺀다 (링크 없는 작품명과 인쇄용 연보는 그대로)
+LINK_TITLE_RE = re.compile(r"(<a\b[^>]*>)〈([^〈〉<]*)〉(</a>)")
+KEEP_BRACKETS = {"chronology.html"}
+
+CSS_RE = re.compile(r'<link rel="stylesheet" href="((?:\.\./|/)?)style\.css(?:\?v=\w+)?">')
+LANG_RE = re.compile(r'<p class="lang noprint">.*?</p>\n', re.S)
+DESC_EN = {
+    "index.html": "Subversive imagination, since 2006. Performance records and news of the theater company Green Pig.",
+    "about.html": "Green Pig, a performance company made by people who believe ideas change the world.",
+    "people.html": "Green Pig's representative, directors and performers.", "texts.html": "Reviews, criticism and articles on Green Pig's productions.",
+    "theaters.html": "Theaters where Green Pig has performed, and the works staged there.", "writers.html": "Writers whose works Green Pig has staged.",
+    "who.html": "Everyone credited in Green Pig's productions, with their works.", "colophon.html": "Who made this site.",
+    "search.html": "Search Green Pig's works, people and theaters.", "archive.html": "Every Green Pig performance and award since 2006.",
+}
 
 def core(text):  # 날짜 비교용: 자동으로 넣는 부분을 뺀 본문 (스타일 버전 표시도 뺀다)
     text = CSS_RE.sub(r'<link rel="stylesheet" href="\1style.css">', text)
-    return DATE_RE.sub("", META_RE.sub("", text)).replace('<html lang="ko">\n', "")
+    return LANG_RE.sub("", DATE_RE.sub("", META_RE.sub("", text))).replace('<html lang="ko">\n', "").replace('<html lang="en">\n', "")
 
 def main():
     today = datetime.now(timezone(timedelta(hours=9)))
@@ -59,29 +73,48 @@ def main():
     # style.css가 바뀌면 주소 뒤 번호(?v=)도 바뀌어, 브라우저가 예전 스타일을 붙들고 있지 않게 한다
     css_v = hashlib.sha1(open(os.path.join(SITE, "style.css"), "rb").read()).hexdigest()[:8]
     css_link = f'<link rel="stylesheet" href="style.css?v={css_v}">\n'
-    for path in sorted(glob.glob(os.path.join(SITE, "*.html"))):
+    ko_pages = {os.path.basename(p) for p in glob.glob(os.path.join(SITE, "*.html"))}
+    en_pages = {os.path.basename(p) for p in glob.glob(os.path.join(SITE, "en", "*.html"))}
+    paths = sorted(glob.glob(os.path.join(SITE, "*.html"))) + sorted(glob.glob(os.path.join(SITE, "en", "*.html")))
+    for path in paths:
+        en = os.path.basename(os.path.dirname(path)) == "en"
         name = os.path.basename(path)
+        skey = ("en/" if en else "") + name
+        up = "../" if en else ""
         text = open(path, encoding="utf-8").read()
         body = core(text)
+        if name not in KEEP_BRACKETS and not en:
+            body = LINK_TITLE_RE.sub(r"\1\2\3", body)
         h = hashlib.sha1(body.encode()).hexdigest()
-        old = state.get(name, {})
+        old = state.get(skey, {})
         date = old.get("date") if old.get("hash") == h else today
-        state[name] = {"hash": h, "date": date}
+        state[skey] = {"hash": h, "date": date}
 
         title = plain(re.search(r"<title>(.*?)</title>", body, re.S).group(1))
-        url = BASE if name == "index.html" else BASE + name
+        url = BASE + ("en/" if en else "") + ("" if name == "index.html" else name)
         img = name.replace(".html", ".jpg")
         image = BASE + img if name.startswith("w") and os.path.exists(os.path.join(SITE, img)) else BASE + "og.png"
-        desc = html.escape(describe(name, body), quote=True)
+        if en:
+            m = re.search(r"<h3>About the work</h3>\s*<p>(.*?)</p>", body, re.S) or re.search(r"<h3>Credits</h3>\s*<p>(.*?)</p>", body, re.S)
+            d = DESC_EN.get(name) or (short(re.sub(r"^History Dispute Project: .*?a year earlier\. ", "History Dispute Project. ", plain(m.group(1)).replace("\n", ", "))) if m else "")
+            desc = html.escape(d or DESC_EN["index.html"], quote=True)
+        else:
+            desc = html.escape(describe(name, body), quote=True)
+        other = (name in ko_pages) if en else (name in en_pages)
+        alt = ""
+        if other:
+            alt = (f'<link rel="alternate" hreflang="ko" href="{BASE}{"" if name == "index.html" else name}">\n' if en else
+                   f'<link rel="alternate" hreflang="en" href="{BASE}en/{"" if name == "index.html" else name}">\n')
         meta = ("<!-- 공통 머리말 -->\n"
-                '<link rel="icon" href="favicon.png" type="image/png">\n'
-                '<link rel="apple-touch-icon" href="apple-touch-icon.png">\n'
-                '<link rel="author" href="humans.txt">\n'
-                '<script src="random.js" defer></script>\n'
+                f'<link rel="icon" href="{up}favicon.png" type="image/png">\n'
+                f'<link rel="apple-touch-icon" href="{up}apple-touch-icon.png">\n'
+                f'<link rel="author" href="{up}humans.txt">\n'
+                f'<script src="{up}random.js" defer></script>\n'
                 # 로고를 눌러 고른 밤낮을 페이지가 그려지기 전에 적용 (theme.js)
-                '<script src="theme.js"></script>\n'
+                f'<script src="{up}theme.js"></script>\n'
+                + alt +
                 f'<meta name="description" content="{desc}">\n'
-                '<meta property="og:site_name" content="그린피그">\n'
+                f'<meta property="og:site_name" content="{"Green Pig" if en else "그린피그"}">\n'
                 f'<meta property="og:title" content="{html.escape(title, quote=True)}">\n'
                 f'<meta property="og:description" content="{desc}">\n'
                 f'<meta property="og:image" content="{image}">\n'
@@ -89,11 +122,18 @@ def main():
                 '<meta property="og:type" content="website">\n'
                 '<meta name="twitter:card" content="summary_large_image">\n'
                 "<!-- /공통 머리말 -->\n")
-        out = body.replace("<!doctype html>\n", '<!doctype html>\n<html lang="ko">\n', 1)
-        out = out.replace('<link rel="stylesheet" href="style.css">\n', css_link + meta, 1)
-        out = out.replace('<link rel="stylesheet" href="/style.css">', f'<link rel="stylesheet" href="/style.css?v={css_v}">', 1)
+        if other:   # 한국어/영어 전환 링크 (오른쪽 위)
+            meta += (f'<p class="lang noprint"><a href="../{name}" hreflang="ko" lang="ko">한국어</a></p>\n' if en else
+                     f'<p class="lang noprint"><a href="en/{name}" hreflang="en" lang="en">English</a></p>\n')
+        lang = "en" if en else "ko"
+        out = body.replace("<!doctype html>\n", f'<!doctype html>\n<html lang="{lang}">\n', 1)
+        if 'href="/style.css"' in out:   # 404.html은 어느 주소에서나 열리므로 절대 경로만 쓰고 머리말을 넣지 않는다
+            out = out.replace('href="/style.css"', f'href="/style.css?v={css_v}"', 1)
+        else:
+            out = CSS_RE.sub(lambda m: f'<link rel="stylesheet" href="{m.group(1)}style.css?v={css_v}">\n' + meta.rstrip("\n"), out, count=1)
         # '발행일' 글자는 눈에 띄지 않는 '발행인' 페이지 링크
-        out = out.rstrip("\n") + f'\n\n<p class="updated"><a class="hid" href="colophon.html">발행일</a> {date}</p>\n'
+        label = "Published" if en else "발행일"
+        out = out.rstrip("\n") + f'\n\n<p class="updated"><a class="hid" href="colophon.html">{label}</a> {date}</p>\n'
         if out != text:
             open(path, "w", encoding="utf-8").write(out)
     json.dump(state, open(STATE, "w"), ensure_ascii=False, indent=0, sort_keys=True)

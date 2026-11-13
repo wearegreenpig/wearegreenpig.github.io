@@ -143,7 +143,7 @@ def rev(x):
         label = "리뷰" + label[len("관람 후기"):]
     if w in CRITICS or any(k in label for k in ("비평", "평론", "단평")):
         kind = "평론"
-    elif "기사" in label or "소개" in label or "칼럼" in label or src in NEWS:
+    elif "기사" in label or "소개 글" in label or "칼럼" in label or src in NEWS:
         kind = "기사"
     else:
         kind = "관객"

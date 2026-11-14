@@ -287,6 +287,13 @@ add("51", 소개="말레이시아, 필리핀, 한국이 정치·경제를 통합
 # X(@wearegreenpig)에 공유된 리뷰·기사 링크. 날짜는 공유된 날.
 B = "네이버 블로그"
 EXTRA["71"]["리뷰"] = [
+    ("2026.11.13", "https://omn.kr/2khyv", "50년 전 베트남의 비극, 왜 동두천에서 다시 시작됐을까", "오마이스타", "이규승"),
+    ("2026.11.13", "https://blog.naver.com/hanseul73/224475695386", "관람 후기", B),
+    ("2026.11.13", "https://blog.naver.com/yidongil70/224475379479", "관람 후기", B),
+    ("2026.11.12", "https://blog.naver.com/sun2y/224473668997", "딱히 자랑스럽지는…", B),
+    ("2026.11.11", "https://blog.naver.com/sf42/224471809676", "관람 후기 (〈전락〉·〈에너미〉 함께)", B),
+    ("2026.11.10", "https://blog.naver.com/yebinbaksa/224471802454", "빨래라는 돌림노래", B),
+    ("2026.11.9", "https://blog.naver.com/soltreekang/224470131104", "관람 후기", B),
     ("2026.11.8", "https://blog.naver.com/ksojune/224469563367", "관람 후기, 출연진 소개 포함", B),
     ("2026.11.8", "https://blog.naver.com/bk16bub/224469151596", "11월 6일 공연 관람기", B),
     ("2026.11.8", "https://blog.naver.com/playnulle/224468739895", "부조리와 커튼콜 없는 엔딩에 대하여", B),
@@ -669,7 +676,7 @@ add("59", 리뷰=[("2025.12.6", "https://blog.naver.com/purun8/224100237800", "�
                 ("2026.6.10", "https://saicriticism.com/%EB%8B%A8%ED%8F%89-%EC%96%91%EB%96%BC%EB%AA%A9%EC%9E%A5%EC%9D%98%EB%8C%80%ED%98%88%ED%88%AC/", "단평", "사이 비평", "박효경"),
                 ("2026.5.30", "https://blog.naver.com/kimockran/224300521405", "리뷰 (2026 세실)", K),
                 ("2024.4.6", "https://blog.naver.com/kimockran/223407889251", "리뷰 (2024 혜화)", K)])
-add("71", 리뷰=[("2026.11", "https://blog.naver.com/purun8/224472895578", "리뷰", E)])
+add("71", 리뷰=[("2026.11.11", "https://blog.naver.com/purun8/224472895578", "한국 현대사의 고속 질주, 현기증 나는 이면", E)])
 add("2024-02", 리뷰=[("2024.2.7", "https://www.imaeil.com/page/view/2024020710393105944", "불멸의 영웅과 위인이 될 수 없는 시대의 역설", "매일신문", "김건표")])
 add("2024-05", 리뷰=[("2024.5.10", "https://blog.naver.com/kimockran/223442916141", "리뷰", K)])
 add("61", 리뷰=[("2024.6.16", "https://blog.naver.com/kimockran/223480661984", "리뷰", K)])

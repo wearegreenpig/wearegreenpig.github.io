@@ -338,7 +338,7 @@ def run(g):
 KIND = {"평론": "Criticism", "기사": "Article", "관객": "Audience review"}
 SRC = {"네이버 블로그": "Naver blog", "네이버 카페": "Naver café", "네이버 포스트": "Naver Post", "티스토리": "Tistory", "매일신문": "Maeil Shinmun",
        "경향신문": "Kyunghyang Shinmun", "노컷뉴스": "CBS NoCut News", "이데일리": "Edaily", "뉴데일리": "New Daily", "민중의소리": "Voice of the People",
-       "매일노동뉴스": "Maeil Labor News", "액티오 웹진": "Actio webzine", "서울연극센터 웹진": "Seoul Theater Center webzine",
+       "매일노동뉴스": "Maeil Labor News", "오마이스타": "OhmyStar", "액티오 웹진": "Actio webzine", "서울연극센터 웹진": "Seoul Theater Center webzine",
        "대학지성 In&Out": "Daehak Jiseong In&Out", "공연예술통합전산망 블로그": "KOPIS blog", "사이 비평": "Sai Criticism"}
 def rev_en(r, title=""):
     return {"d": r["d"], "u": r["u"], "t": KIND[r["k"]], "s": SRC.get(r["s"], r["s"]), "w": roman(r["w"]) if r["w"] else "",

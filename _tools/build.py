@@ -135,7 +135,7 @@ HEAD = """<!doctype html>
 """
 
 # 리뷰 한 줄: (날짜, 주소, 설명, 출처[, 글쓴이]) → 글쓴이와 종류(평론·기사·관객)를 붙인다
-NEWS = {"경향신문", "노컷뉴스", "이데일리", "뉴데일리", "민중의소리", "매일노동뉴스", "Today's Theater in Seoul", "네이버 포스트"}
+NEWS = {"경향신문", "노컷뉴스", "이데일리", "뉴데일리", "민중의소리", "매일노동뉴스", "오마이스타", "Today's Theater in Seoul", "네이버 포스트"}
 def rev(x):
     d, u, label, src = x[:4]
     w = x[4] if len(x) > 4 else next((n for k, n in WRITERS.items() if k in u), "")

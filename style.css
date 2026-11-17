@@ -72,10 +72,10 @@ div.cols>p{break-inside:avoid;margin:0 0 1em}
 .essay sup{line-height:0}
 /* 전광판에서 눌러 온 문장 */
 .s.here{background:var(--hl);box-decoration-break:clone;-webkit-box-decoration-break:clone}
-/* 전광판: 소개 페이지 맨 위에서 실린 글의 문장이 하나씩 바뀐다 (rotator.js) */
+/* 전광판: 소개 페이지 맨 위에서 실린 글의 문장이 하나씩 바뀐다 (rotator.js). 글씨는 본문 16 → 제목 24 → 36 → 54px, 1.5배씩 */
 .rotator{display:grid;place-content:center;min-height:60vh;min-height:60svh;text-align:center;padding:1em 0}
 .rotator[hidden]{display:none}
-.rotator a,.rotator a:visited{display:block;color:var(--fg);text-decoration:none;font-weight:800;letter-spacing:-.01em;max-width:24em;margin:0 auto;font-size:clamp(1.3rem,3.3vw,2.3rem);line-height:1.4;word-break:keep-all;overflow-wrap:anywhere}
+.rotator a,.rotator a:visited{display:block;color:var(--fg);text-decoration:none;font-weight:800;letter-spacing:-.01em;max-width:24em;margin:0 auto;font-size:clamp(1.625rem,4.5vw,3.375rem);line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
 .rotator a:hover{text-decoration:underline;text-decoration-thickness:.05em;text-underline-offset:.15em}
 .rotator small{display:block;margin-top:1.2em;color:var(--rule)}
 /* 본문 크기 전광판: 맨 위에 작게 (.rotator에 small을 붙이면) */

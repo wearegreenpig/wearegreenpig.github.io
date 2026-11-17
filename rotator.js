@@ -3,8 +3,9 @@
 //   문장은 이 파일이 글에서 직접 뽑으므로, 글을 고치거나 새 글을 더하면 전광판에도 저절로 들어간다.
 //   각 문장에는 '글 id-번호' 꼴의 주소가 붙는다 (예: about.html#오는-사람-3).
 // - 영어판처럼 상자 안에 링크가 미리 들어 있으면 그 링크들을 1초마다 바꾼다.
-// 볼 때마다 순서를 섞고, 마우스를 올리거나 초점이 가면 멈춘다. 기기에서 '동작 줄이기'를 켰으면 하나만 보여 준다.
+// 넘어가는 속도는 늘 같다. 볼 때마다 순서를 섞고, 마우스를 올리거나 초점이 가면 멈춘다. 기기에서 '동작 줄이기'를 켰으면 하나만 보여 준다.
 (function () {
+  var SPEED = 1000;  // 넘어가는 간격(밀리초). 상자에 data-speed="1500"처럼 적으면 그 값을 쓴다
   var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function shuffle(a) {
@@ -102,9 +103,8 @@
       var items = shuffle(sentences(box));
       if (!items.length) return;
       box.hidden = false;
-      // 읽을 시간: 글자 수에 맞춰 2초에서 8초 사이
       run(box, items, function (k) { show(box, items[k]); },
-          function (k) { return Math.min(8000, Math.max(2000, 900 + items[k].text.length * 70)); });
+          function () { return +box.getAttribute("data-speed") || SPEED; });
       window.addEventListener("hashchange", function () { mark(true); });
       mark(true);
       return;
@@ -114,6 +114,6 @@
     links.forEach(function (el) { box.appendChild(el); el.style.display = "none"; });
     var shown = links[0];
     run(box, links, function (k) { shown.style.display = "none"; shown = links[k]; shown.style.display = "block"; },
-        function () { return 1000; });
+        function () { return +box.getAttribute("data-speed") || SPEED; });
   });
 })();

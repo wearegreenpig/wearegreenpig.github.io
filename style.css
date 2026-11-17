@@ -56,8 +56,10 @@ ul.cols{list-style:none;padding:0;margin:0 0 1em;columns:20rem 4;column-gap:2rem
 ul.cols li{break-inside:avoid;padding-left:1em;text-indent:-1em}
 div.cols{columns:20rem 4;column-gap:2rem}
 div.cols>p{break-inside:avoid;margin:0 0 1em}
-/* 소개 페이지 머리: 선언문과 '실린 글' 목차. 목차는 선언문에서 넉넉히 띄운다 */
-.intro>p{max-width:38em}
+/* 소개 페이지 첫 화면: 전광판이 남는 높이를 채우고 소개글은 화면 아래쪽에. 모니터 크기와 상관없이 둘이 한 화면에 담기고 '실린 글'부터는 아래로 */
+.first{display:flex;flex-direction:column;min-height:calc(100vh - 6.5em);min-height:calc(100svh - 6.5em)}
+.first>.rotator{flex:1 0 auto;min-height:12em}
+.first>p{max-width:38em;margin-bottom:0}
 .toc{margin-top:2.75em;max-width:38em}
 .toc .label{font-size:smaller;color:var(--rule);margin-bottom:.2em}
 .toc .label+p{margin-top:0}
@@ -71,7 +73,7 @@ div.cols>p{break-inside:avoid;margin:0 0 1em}
 /* 전광판에서 눌러 온 문장 */
 .s.here{background:var(--hl);box-decoration-break:clone;-webkit-box-decoration-break:clone}
 /* 전광판: 소개 페이지 맨 위에서 실린 글의 문장이 하나씩 바뀐다 (rotator.js) */
-.rotator{display:grid;place-content:center;min-height:60vh;min-height:60svh;text-align:center}
+.rotator{display:grid;place-content:center;min-height:60vh;min-height:60svh;text-align:center;padding:1em 0}
 .rotator[hidden]{display:none}
 .rotator a,.rotator a:visited{display:block;color:var(--fg);text-decoration:none;font-weight:800;letter-spacing:-.01em;max-width:24em;margin:0 auto;font-size:clamp(1.3rem,3.3vw,2.3rem);line-height:1.4;word-break:keep-all;overflow-wrap:anywhere}
 .rotator a:hover{text-decoration:underline;text-decoration-thickness:.05em;text-underline-offset:.15em}

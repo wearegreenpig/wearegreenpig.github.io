@@ -245,11 +245,28 @@ def run(g):
     pe.append('<p>\n<a href="who.html">Full credits index</a>\n</p>\n\n<hr>\n<p>greenpig.kr@gmail.com</p>\n')
     write("people.html", pe)
 
-    # ---- 소개 ----
-    rot = ('<div class="rotator" aria-label="Works by Green Pig">\n' + "\n".join(f'<a href="{page(s)}">{esc(T[s])}</a>' for s in reversed(order)) +
-           '\n</div>\n<script src="../rotator.js" defer></script>\n')
-    write("about.html", [HEAD.format(t="About"), crumb("About"), rot, "<h2>Subversive Imagination: Green Pig</h2>\n",
-                         f"<p>{E.ABOUT}</p>\n", "<hr>\n<p>greenpig.kr@gmail.com</p>\n"])
+    # ---- 소개: 전광판(글의 문장) + 선언문 + 포트폴리오(2018) 글 세 편 (works_data_en.ABOUT_ESSAYS) ----
+    def fill(t):
+        t = re.sub(r"\{w:(\w[\w-]*)\}", lambda m: f'<a href="{page(m.group(1))}">{esc(T[m.group(1)])}</a>', t)
+        t = re.sub(r"\{p:([^}]+)\}", lambda m: f'<a href="who.html#{m.group(1)}">{roman(m.group(1))}</a>', t)
+        return t.replace("[1]", '<sup><a href="#note1" id="note1-ref">1</a></sup>')
+    ab = [HEAD.format(t="About"), crumb("About"),
+          '<!-- Rotator: one sentence at a time from the essays below; click to jump to it (rotator.js) -->\n'
+          '<div class="rotator" data-from=".essay" aria-label="One sentence at a time from the essays below" hidden></div>\n'
+          '<script src="../rotator.js" defer></script>\n',
+          "<h2>Subversive Imagination: Green Pig</h2>\n", f"<p>{E.ABOUT}</p>\n",
+          "<p>\n" + "<br>\n".join(f'<a href="#{i}">{esc(t)}</a> {roman(a)}' for i, t, a, _, _, _ in E.ABOUT_ESSAYS) + "\n</p>\n",
+          f'<p class="note">{E.ABOUT_NOTE}</p>\n']
+    for i, t, a, extra, year, paras in E.ABOUT_ESSAYS:
+        ab.append(f'<hr>\n\n<div class="essay">\n<h3 id="{i}">{esc(t)}</h3>\n'
+                  f'<p class="byline">By <a href="who.html#{a}">{roman(a)}</a>{fill(extra)} · {year}</p>')
+        for x in paras:
+            ab.append(f'<p class="hash">{esc(x)}</p>' if x.startswith("# ") else f"<p>{fill(x)}</p>")
+        if any("[1]" in x for x in paras):
+            ab.append(f'<p class="note" id="note1"><a href="#note1-ref">1</a> {E.ABOUT_FOOTNOTE}</p>')
+        ab.append("</div>\n")
+    ab.append("<hr>\n<p>greenpig.kr@gmail.com</p>\n")
+    write("about.html", ab)
 
     # ---- 첫 페이지 (한국어 첫 페이지의 소식 세 줄을 옮긴다) ----
     ix = open(f"{SITE}/index.html").read()
@@ -298,8 +315,9 @@ def run(g):
           "<script>var L={none:'Nothing to show.',other:'Other criticism and articles',aud:'Audience reviews'};var RV=" +
           json.dumps(rv, ensure_ascii=False, separators=(",", ":")) + ",RC=" + json.dumps(crit, ensure_ascii=False) + ';</script>\n<script src="../texts.js" defer></script>\n',
           '<h3 id="criticism">Criticism in print</h3>\n<p>\n' + "<br>\n".join(E.CRITIC_NOTE[k] for k in E.CRITIC_NOTE) + "\n</p>\n",
-          '<h3 id="essays">Writing on Green Pig</h3>\n<p>\n2014 <a href="https://www.sfac.or.kr/site/theater/WZ020300/webzine_view.do?wtIdx=10790">Choi Yunwoo, "Uncomfortable Stories, Told Uncomfortably" (Seoul Theater Center webzine Yeongeuk-in, in Korean)</a><br>\n'
-          'Park Sanghyun, "Those Who Come, Those Who Go, Those Who Stay" (in the Green Pig portfolio)<br>\nCho Mansu, "Green Pig\'s Uncomfortable Theater" (in the Green Pig portfolio)\n</p>\n',
+          '<h3 id="essays">Writing on Green Pig</h3>\n<p>\n' +
+          "".join(f'2018 <a href="about.html#{i}">{roman(au)}, “{esc(t)}” (in the Green Pig portfolio)</a><br>\n' for i, t, au, _, _, _ in E.ABOUT_ESSAYS) +
+          '2014 <a href="https://www.sfac.or.kr/site/theater/WZ020300/webzine_view.do?wtIdx=10790">Choi Yunwoo, "Uncomfortable Stories, Told Uncomfortably" (Seoul Theater Center webzine Yeongeuk-in, in Korean)</a><br>\n</p>\n',
           "<hr>\n<p>greenpig.kr@gmail.com</p>\n"]
     write("texts.html", tx)
 

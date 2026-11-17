@@ -2,10 +2,11 @@
 // - 소개 페이지(data-from이 있는 상자): 아래 실린 글(.essay)의 문장을 하나씩 보여 주고, 누르면 그 문장으로 간다.
 //   문장은 이 파일이 글에서 직접 뽑으므로, 글을 고치거나 새 글을 더하면 전광판에도 저절로 들어간다.
 //   각 문장에는 '글 id-번호' 꼴의 주소가 붙는다 (예: about.html#오는-사람-3).
-// - 영어판처럼 상자 안에 링크가 미리 들어 있으면 그 링크들을 1초마다 바꾼다.
+// - 상자 안에 링크가 미리 들어 있으면 그 링크들을 바꾼다 (예전 방식).
 // 넘어가는 속도는 늘 같다. 볼 때마다 순서를 섞고, 마우스를 올리거나 초점이 가면 멈춘다. 기기에서 '동작 줄이기'를 켰으면 하나만 보여 준다.
 (function () {
   var SPEED = 1000;  // 넘어가는 간격(밀리초). 상자에 data-speed="1500"처럼 적으면 그 값을 쓴다
+  var EN = document.documentElement.lang === "en";
   var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function shuffle(a) {
@@ -42,8 +43,8 @@
   function plain(el) {  // 각주 번호는 빼고 글자만
     var c = el.cloneNode(true);
     [].slice.call(c.querySelectorAll("sup")).forEach(function (x) { x.remove(); });
-    // 본문에서는 파란 글씨가 작품명임을 알려 주지만, 전광판에서는 검은 글씨라 〈 〉를 다시 붙인다
-    [].slice.call(c.querySelectorAll('a[href^="w"]')).forEach(function (x) { x.textContent = "〈" + x.textContent + "〉"; });
+    // 본문에서는 파란 글씨가 작품명임을 알려 주지만, 전광판에서는 검은 글씨라 〈 〉(영어판은 ‹ ›)를 다시 붙인다
+    [].slice.call(c.querySelectorAll("a")).filter(function (x) { return /^w\d/.test(x.getAttribute("href")); }).forEach(function (x) { x.textContent = EN ? "‹" + x.textContent + "›" : "〈" + x.textContent + "〉"; });
     return c.textContent.replace(/\s+/g, " ").trim();
   }
 
@@ -67,7 +68,7 @@
         p.querySelectorAll(".s").forEach(function (s) {
           s.id = h.id + "-" + (++n);
           var t = plain(s);
-          if (t.length >= 8 && t.length <= 120) list.push({ id: s.id, text: t, from: who + ", 「" + h.textContent + "」" });
+          if (t.length >= (EN ? 15 : 8) && t.length <= (EN ? 200 : 120)) list.push({ id: s.id, text: t, from: EN ? who + ", “" + h.textContent + "”" : who + ", 「" + h.textContent + "」" });
         });
       });
     });
@@ -77,7 +78,8 @@
   function show(box, item) {
     var a = document.createElement("a"), c = document.createElement("small");
     a.href = "#" + item.id; a.textContent = item.text;
-    a.className = item.text.length <= 24 ? "l" : item.text.length <= 50 ? "m" : "x";
+    var n = EN ? item.text.length / 1.8 : item.text.length;   // 영어는 글자 수가 한글의 두 배쯤
+    a.className = n <= 24 ? "l" : n <= 50 ? "m" : "x";
     c.textContent = item.from;
     box.textContent = ""; box.appendChild(a); box.appendChild(c);
   }

@@ -87,3 +87,7 @@ div.cols>p{break-inside:avoid;margin:0 0 1em}
 .rvctl a.on,.rvctl a.on:visited{color:var(--fg);text-decoration:none;cursor:default}
 /* 한국어/영어 전환 링크: 오른쪽 위 */
 .lang{float:right;margin:1em 0 0 1em}
+/* 모든 페이지 맨 아래 사이트 메뉴 (finish.py가 넣음). 지금 페이지는 검은 글씨 */
+.foot{margin-top:1.5em}
+.foot a,.foot span{white-space:nowrap}
+.foot [aria-current]{color:var(--fg)}

@@ -158,7 +158,7 @@ def run(g):
         nav = []
         if i > 0: nav.append(f'Previous: <a href="{page(order[i-1])}">{esc(T[order[i-1]])}</a>')
         if i < len(order) - 1: nav.append(f'Next: <a href="{page(order[i+1])}">{esc(T[order[i+1]])}</a>')
-        out.append("<hr>\n<p>" + " | ".join(nav) + '<br>\n<a href="archive.html">Back to the archive</a> | <a class="random" href="archive.html">Any work</a></p>\n')
+        out.append("<hr>\n<p>" + " | ".join(nav) + "</p>\n")
         write(page(slug), out)
 
     # ---- 아카이브 ----

@@ -212,7 +212,7 @@ for i, slug in enumerate(order):
         p = order[i-1]; nav.append(f'이전: <a href="{page(p)}">〈{works[p]["title"]}〉</a>')
     if i < len(order) - 1:
         n = order[i+1]; nav.append(f'다음: <a href="{page(n)}">〈{works[n]["title"]}〉</a>')
-    out.append("<hr>\n<p>" + " | ".join(nav) + '<br>\n<a href="archive.html">아카이브로 돌아가기</a> | <a class="random" href="archive.html">아무 작품이나</a></p>\n')
+    out.append("<hr>\n<p>" + " | ".join(nav) + "</p>\n")   # 아카이브·아무 작품이나는 맨 아래 공통 메뉴에 있다
     open(f"{SITE}/{page(slug)}", "w").write("\n".join(out))
 
 # 아카이브 다시 만들기: 연도별 목록(날짜 〈제목〉 / 공연장) + 기타 공연(works_data의 OTHER) + 기존 수상 블록 유지

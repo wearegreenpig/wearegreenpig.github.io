@@ -68,9 +68,30 @@ def js_version(page_dir, m):
     v = hashlib.sha1(open(f, "rb").read()).hexdigest()[:8]
     return f'<script src="{m.group(1)}{m.group(2)}.js?v={v}"'
 
+# 공통 꼬리말: 첫 페이지를 뺀 모든 페이지 맨 아래에 사이트 메뉴를 넣어, 위로 올라가지 않고도 다른 곳으로 갈 수 있게 한다.
+# 맨 앞 '그린피그'는 첫 페이지로 가는 길. 지금 보고 있는 페이지는 링크 없이 검은 글씨로.
+FOOT_RE = re.compile(r"\n*<!-- 공통 꼬리말 -->.*?<!-- /공통 꼬리말 -->\n*", re.S)
+FOOT_KO = [("index.html", "그린피그"), ("about.html", "소개"), ("archive.html", "아카이브"), ("people.html", "사람"),
+           ("texts.html", "텍스트"), ("random", "아무 작품이나"), ("search.html", "찾기")]
+FOOT_EN = [("index.html", "Green Pig"), ("about.html", "About"), ("archive.html", "Archive"), ("people.html", "People"),
+           ("texts.html", "Texts"), ("random", "Any work"), ("search.html", "Search")]
+
+def footer(name, en, root=""):
+    items = []
+    for href, label in (FOOT_EN if en else FOOT_KO):
+        if href == name:
+            items.append(f'<span aria-current="page">{label}</span>')
+        elif href == "random":
+            items.append(f'<a class="random" href="{root}archive.html">{label}</a>')
+        else:
+            items.append(f'<a href="{root}{href}">{label}</a>')
+    return ("\n\n<!-- 공통 꼬리말 -->\n" f'<nav class="foot noprint" aria-label="{"Site menu" if en else "사이트 메뉴"}">\n'
+            + " |\n".join(items) + "\n</nav>\n<!-- /공통 꼬리말 -->")
+
 def core(text):  # 날짜 비교용: 자동으로 넣는 부분을 뺀 본문 (스타일·스크립트 버전 표시도 뺀다)
     text = CSS_RE.sub(r'<link rel="stylesheet" href="\1style.css">', text)
     text = JS_RE.sub(r'<script src="\1\2.js"', text)
+    text = FOOT_RE.sub("\n\n", text)
     return LANG_RE.sub("", DATE_RE.sub("", META_RE.sub("", text))).replace('<html lang="ko">\n', "").replace('<html lang="en">\n', "")
 
 def main():
@@ -142,6 +163,8 @@ def main():
         else:
             out = CSS_RE.sub(lambda m: f'<link rel="stylesheet" href="{m.group(1)}style.css?v={css_v}">\n' + meta.rstrip("\n"), out, count=1)
         out = JS_RE.sub(lambda m: js_version(os.path.dirname(path), m), out)
+        if name != "index.html":   # 첫 페이지는 메뉴가 맨 위에 있으므로 빼고. 404는 어느 주소에서나 열리므로 절대 경로로
+            out = out.rstrip("\n") + footer(name, en, ("/en/" if en else "/") if name == "404.html" else "")
         # '발행일' 글자는 눈에 띄지 않는 '발행인' 페이지 링크
         label = "Published" if en else "발행일"
         out = out.rstrip("\n") + f'\n\n<p class="updated"><a class="hid" href="colophon.html">{label}</a> {date}</p>\n'

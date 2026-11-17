@@ -254,9 +254,9 @@ def run(g):
           '<!-- Rotator: one sentence at a time from the essays below; click to jump to it (rotator.js) -->\n'
           '<div class="rotator" data-from=".essay" aria-label="One sentence at a time from the essays below" hidden></div>\n'
           '<script src="../rotator.js" defer></script>\n',
-          "<h2>Subversive Imagination: Green Pig</h2>\n", f"<p>{E.ABOUT}</p>\n",
+          "<h2>Subversive Imagination: Green Pig</h2>\n", f'<div class="intro">\n<p>{E.ABOUT}</p>\n\n<div class="toc">\n<p class="label">Essays</p>\n',
           "<p>\n" + "<br>\n".join(f'<a href="#{i}">{esc(t)}</a> {roman(a)}' for i, t, a, _, _, _ in E.ABOUT_ESSAYS) + "\n</p>\n",
-          f'<p class="note">{E.ABOUT_NOTE}</p>\n']
+          f'<p class="note">{E.ABOUT_NOTE}</p>\n</div>\n</div>\n']
     for i, t, a, extra, year, paras in E.ABOUT_ESSAYS:
         ab.append(f'<hr>\n\n<div class="essay">\n<h3 id="{i}">{esc(t)}</h3>\n'
                   f'<p class="byline">By <a href="who.html#{a}">{roman(a)}</a>{fill(extra)} · {year}</p>')

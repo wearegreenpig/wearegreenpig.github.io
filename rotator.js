@@ -1,5 +1,5 @@
 // 전광판: 글자를 하나씩 바꿔 보여 준다.
-// - 소개 페이지(data-from이 있는 상자): 아래 실린 글(.essay)의 문장을 하나씩 보여 주고, 누르면 그 문장으로 간다.
+// - 소개 페이지(data-from이 있는 상자): 실린 글(.essay)의 문장을 하나씩 보여 주고, 누르면 그 문장으로 간다.
 //   문장은 이 파일이 글에서 직접 뽑으므로, 글을 고치거나 새 글을 더하면 전광판에도 저절로 들어간다.
 //   각 문장에는 '글 id-번호' 꼴의 주소가 붙는다 (예: about.html#오는-사람-3).
 // - 상자 안에 링크가 미리 들어 있으면 그 링크들을 바꾼다 (예전 방식).
@@ -68,7 +68,8 @@
         p.querySelectorAll(".s").forEach(function (s) {
           s.id = h.id + "-" + (++n);
           var t = plain(s);
-          if (t.length >= (EN ? 15 : 8) && t.length <= (EN ? 200 : 120)) list.push({ id: s.id, text: t, from: EN ? who + ", “" + h.textContent + "”" : who + ", 「" + h.textContent + "」" });
+          // 전광판에는 폰에서도 세 줄 안쪽인 문장만
+          if (t.length >= (EN ? 15 : 8) && t.length <= (EN ? 130 : 60)) list.push({ id: s.id, text: t, from: EN ? who + ", “" + h.textContent + "”" : who + ", 「" + h.textContent + "」" });
         });
       });
     });
@@ -78,8 +79,6 @@
   function show(box, item) {
     var a = document.createElement("a"), c = document.createElement("small");
     a.href = "#" + item.id; a.textContent = item.text;
-    var n = EN ? item.text.length / 1.8 : item.text.length;   // 영어는 글자 수가 한글의 두 배쯤
-    a.className = n <= 24 ? "l" : n <= 50 ? "m" : "x";
     c.textContent = item.from;
     box.textContent = ""; box.appendChild(a); box.appendChild(c);
   }

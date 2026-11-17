@@ -251,10 +251,10 @@ def run(g):
         t = re.sub(r"\{p:([^}]+)\}", lambda m: f'<a href="who.html#{m.group(1)}">{roman(m.group(1))}</a>', t)
         return t.replace("[1]", '<sup><a href="#note1" id="note1-ref">1</a></sup>')
     ab = [HEAD.format(t="About"), crumb("About"),
+          "<h2>Subversive Imagination: Green Pig</h2>\n", f'<div class="intro">\n<p>{E.ABOUT}</p>\n\n'
           '<!-- Rotator: one sentence at a time from the essays below; click to jump to it (rotator.js) -->\n'
           '<div class="rotator" data-from=".essay" aria-label="One sentence at a time from the essays below" hidden></div>\n'
-          '<script src="../rotator.js" defer></script>\n',
-          "<h2>Subversive Imagination: Green Pig</h2>\n", f'<div class="intro">\n<p>{E.ABOUT}</p>\n\n<div class="toc">\n<p class="label">Essays</p>\n',
+          '<script src="../rotator.js" defer></script>\n\n<div class="toc">\n<p class="label">Essays</p>\n',
           "<p>\n" + "<br>\n".join(f'<a href="#{i}">{esc(t)}</a> {roman(a)}' for i, t, a, _, _, _ in E.ABOUT_ESSAYS) + "\n</p>\n",
           f'<p class="note">{E.ABOUT_NOTE}</p>\n</div>\n</div>\n']
     for i, t, a, extra, year, paras in E.ABOUT_ESSAYS:

@@ -59,8 +59,18 @@ DESC_EN = {
     "search.html": "Search Green Pig's works, people and theaters.", "archive.html": "Every Green Pig performance and award since 2006.",
 }
 
-def core(text):  # 날짜 비교용: 자동으로 넣는 부분을 뺀 본문 (스타일 버전 표시도 뺀다)
+# 본문의 스크립트도 바뀌면 주소 뒤 번호(?v=)가 바뀌어, 브라우저가 예전 스크립트를 붙들고 있지 않게 한다
+JS_RE = re.compile(r'<script src="((?:\.\./)?)(rotator|texts|search)\.js(?:\?v=\w+)?"')
+
+def js_version(page_dir, m):
+    f = os.path.normpath(os.path.join(page_dir, m.group(1) + m.group(2) + ".js"))
+    if not os.path.exists(f): return m.group(0)
+    v = hashlib.sha1(open(f, "rb").read()).hexdigest()[:8]
+    return f'<script src="{m.group(1)}{m.group(2)}.js?v={v}"'
+
+def core(text):  # 날짜 비교용: 자동으로 넣는 부분을 뺀 본문 (스타일·스크립트 버전 표시도 뺀다)
     text = CSS_RE.sub(r'<link rel="stylesheet" href="\1style.css">', text)
+    text = JS_RE.sub(r'<script src="\1\2.js"', text)
     return LANG_RE.sub("", DATE_RE.sub("", META_RE.sub("", text))).replace('<html lang="ko">\n', "").replace('<html lang="en">\n', "")
 
 def main():
@@ -131,6 +141,7 @@ def main():
             out = out.replace('href="/style.css"', f'href="/style.css?v={css_v}"', 1)
         else:
             out = CSS_RE.sub(lambda m: f'<link rel="stylesheet" href="{m.group(1)}style.css?v={css_v}">\n' + meta.rstrip("\n"), out, count=1)
+        out = JS_RE.sub(lambda m: js_version(os.path.dirname(path), m), out)
         # '발행일' 글자는 눈에 띄지 않는 '발행인' 페이지 링크
         label = "Published" if en else "발행일"
         out = out.rstrip("\n") + f'\n\n<p class="updated"><a class="hid" href="colophon.html">{label}</a> {date}</p>\n'
